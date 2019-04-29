@@ -3,8 +3,8 @@ package wclass.z_pending_class.velocity;
 import java.util.ArrayList;
 import java.util.List;
 
-import wclass.ui.event_pointer.PointerAdmin;
-import wclass.ui.event_pointer.SpecificPointer;
+import wclass.ui.event_parser.PointerAdmin;
+import wclass.ui.event_parser.SpecificPointer;
 import wclass.enums.EventType;
 import wclass.HEC.SimpleRecycler;
 

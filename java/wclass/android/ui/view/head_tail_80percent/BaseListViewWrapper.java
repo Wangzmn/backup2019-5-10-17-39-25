@@ -10,6 +10,7 @@ import android.widget.Scroller;
 import wclass.android.ui.EventTypeConverter;
 import wclass.android.z_debug.EventUT;
 import wclass.enums.EventType;
+import wclass.ui.event_parser.MultiSingleParser;
 
 /**
  * @作者 做就行了！
@@ -45,12 +46,12 @@ public abstract class BaseListViewWrapper extends FrameLayout {
     private boolean justIntercept = false;
 
     Scroller scroller;
-    SingleParser singleParser;
+    MultiSingleParser multiSingleParser;
 
     //////////////////////////////////////////////////
     public BaseListViewWrapper(Context context) {
         super(context);
-        singleParser = new SingleParser(ViewConfiguration.get(
+        multiSingleParser = new MultiSingleParser(ViewConfiguration.get(
                 context).getScaledTouchSlop());
         scroller = new Scroller(context);
     }
@@ -82,10 +83,10 @@ public abstract class BaseListViewWrapper extends FrameLayout {
     /**
      * 获取实时的滑动距离。
      *
-     * @param singleParser 通过该对象获取滑动数值。
+     * @param multiSingleParser 通过该对象获取滑动数值。
      * @return 获取滑动的距离。
      */
-    protected abstract float getScrollDelta(SingleParser singleParser);
+    protected abstract float getScrollDelta(MultiSingleParser multiSingleParser);
 
     /**
      * 滑动的状态分析。
@@ -118,10 +119,10 @@ public abstract class BaseListViewWrapper extends FrameLayout {
     private void handleTailGoing(MotionEvent event) {
         pre(event);
         EventType type = EventUT.convert(event);
-        singleParser.parse(event);
+        multiSingleParser.parse(event);
         switch (type) {
             case MOVE:
-                float delta = getScrollDelta(singleParser);
+                float delta = getScrollDelta(multiSingleParser);
                 //往之前滑动。
                 if (delta < 0) {
                     onTailBacking(-delta);
@@ -147,10 +148,10 @@ public abstract class BaseListViewWrapper extends FrameLayout {
     private void handleHeadGoing(MotionEvent event) {
         pre(event);
         EventType type = EventUT.convert(event);
-        singleParser.parse(event);
+        multiSingleParser.parse(event);
         switch (type) {
             case MOVE:
-                float delta = getScrollDelta(singleParser);
+                float delta = getScrollDelta(multiSingleParser);
                 //往之前滑动。
                 if (delta < 0) {
                     onHeadGoing(-delta);

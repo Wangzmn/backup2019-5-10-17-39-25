@@ -39,9 +39,9 @@ public abstract class Adapter {
      */
     public abstract boolean recycle(int position);
 
-    public int appearAtScroll(int position) {
-
-    }
+//    public int appearAtScroll(int position) {
+//
+//    }
 
     public void isStableXY(int position){
 

@@ -16,6 +16,7 @@ import android.view.ViewGroup;
  * @优化记录： -
  * @待解决： -
  */
+@Deprecated
 @SuppressWarnings("DanglingJavadoc")
 public abstract class BaseViewGroup extends ViewGroup {
 

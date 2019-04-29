@@ -16,7 +16,7 @@ import wclass.android.ui.FloatWindowUT;
 import wclass.enums.EventType;
 import wclass.enums.LayoutGravity;
 import wclass.enums.Orien2;
-import wclass.ui.event_pointer.SimplePointer;
+import wclass.ui.event_parser.SimplePointer;
 import wclass.util.ColorUT;
 import zmn.w.uiutility.main_class.role.Puppet;
 import zmn.w.uiutility.main_class.window.Window;

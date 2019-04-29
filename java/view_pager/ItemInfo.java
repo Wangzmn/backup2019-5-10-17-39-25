@@ -9,5 +9,5 @@ import android.view.View;
  */
 public class ItemInfo {
     View view;
-    boolean needLayout
+//    boolean needLayout
 }

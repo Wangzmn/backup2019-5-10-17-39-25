@@ -6,6 +6,7 @@ import android.view.View;
 
 import wclass.android.util.SizeUT;
 import wclass.android.z_pending_class.HandlerClassUT;
+import wclass.ui.event_parser.MultiSingleParser;
 import wclass.util.MathUT;
 
 /**
@@ -197,8 +198,8 @@ public class ListViewWrapper extends BaseListViewWrapper {
     }
     //////////////////////////////////////////////////
 
-    protected float getScrollDelta(SingleParser singleParser) {
-        return singleParser.getScrollDeltaY_cutMove();
+    protected float getScrollDelta(MultiSingleParser multiSingleParser) {
+        return multiSingleParser.getScrollDeltaY_cutMove();
     }
 
     /**

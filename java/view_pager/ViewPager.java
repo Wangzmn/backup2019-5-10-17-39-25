@@ -1,9 +1,10 @@
 package view_pager;
 
 import android.content.Context;
+import android.util.SparseArray;
+import android.view.MotionEvent;
 import android.view.View;
 
-import wclass.HEC.IntMap;
 import wclass.android.ui.view.base_view.UsefulViewGroup;
 
 /**
@@ -11,6 +12,7 @@ import wclass.android.ui.view.base_view.UsefulViewGroup;
  * @时间 2019/4/28 0028
  * @使用说明：
  */
+@SuppressWarnings("unchecked")
 public class ViewPager extends UsefulViewGroup {
 
     private static final boolean DEBUG = true;
@@ -20,23 +22,31 @@ public class ViewPager extends UsefulViewGroup {
      * 1、超出指定数量时，Detach最早的item。
      * ①解决：
      * ·加载哪个方向，detach另一个方向。
+     * //     * 2、通过速率fling。
+     * //     * ①记录触摸的最大坐标。
      */
     //////////////////////////////////////////////////
     boolean init = false;
     private int w;
     private int h;
     private Context context;
-    //--------------------------------------------------
-    IntMap<View>items = new IntMap<>();
     //////////////////////////////////////////////////
 
     public ViewPager(Context context) {
         super(context);
         this.context = context;
-        if(DEBUG){
+
+        if (DEBUG) {
 
         }
     }
+    //////////////////////////////////////////////////
+
+    @Override
+    protected boolean needScroll() {
+        return true;
+    }
+    //////////////////////////////////////////////////
 
     @Override
     protected void onSizeChangedSafely(int w, int h) {
@@ -51,17 +61,46 @@ public class ViewPager extends UsefulViewGroup {
     }
 
     Adapter adapter;
+    SparseArray<ItemInfo> items = new SparseArray<>();
 
     private void init() {
         if (showPosition == -1) {
             showPosition = 0;
         }
-        View view = getview();
-        items.put()
+        attachItem(showPosition);
+        if (autoLoad) {
+            attachItem(showPosition - 1);
+            attachItem(showPosition + 1);
+        }
     }
 
-    private View getview() {
-        return adapter.getView(context, showPosition, w, h);
+    private void attachItem(int position) {
+        if (!verifyPosition(position)) {
+            return;
+        }
+        View view = getview(position);
+        addView(view);
+        measureChild(view);
+        adapter.onLayoutView(view, position, this);
+        items.put(position, new ItemInfo(view, position));
+    }
+
+    private boolean verifyPosition(int position) {
+        return position >= 0 && position < adapter.getItemCount();
+    }
+
+    boolean autoLoad = true;
+
+    class ItemInfo {
+        View view;
+
+        ItemInfo(View view, int position) {
+            this.view = view;
+        }
+    }
+
+    private View getview(int position) {
+        return adapter.getView(context, position, w, h);
     }
 
     int showPosition = -1;
@@ -86,10 +125,11 @@ public class ViewPager extends UsefulViewGroup {
 
         public abstract T getView(Context context, int position, int pageW, int pageH);
 
-        public void onLayoutView(T view, int position,ViewPager viewPager) {
-            view.layout(getScrollXForPosition(position,viewPager),0,
-                    view.getMeasuredWidth(),view.getMeasuredHeight());
+        public void onLayoutView(T view, int position, ViewPager viewPager) {
+            view.layout(getScrollXForPosition(position, viewPager), 0,
+                    view.getMeasuredWidth(), view.getMeasuredHeight());
         }
+
         public abstract void onDetachView(T view, int position);
 
         //////////////////////////////////////////////////
@@ -101,8 +141,14 @@ public class ViewPager extends UsefulViewGroup {
          * @param position view的下标。
          * @return view所在的滑动值。
          */
-        public int getScrollXForPosition(int position,ViewPager viewPager) {
+        public int getScrollXForPosition(int position, ViewPager viewPager) {
             return position * viewPager.getWidth();
+        }
+
+        public abstract int getItemCount();
+
+        public boolean lastAskChildNeedEventBeforeScroll(MotionEvent ev) {
+            return false;
         }
     }
 
