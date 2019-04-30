@@ -9,7 +9,7 @@ import wclass.z_pending_class.data.DataDexChangeListener;
 import wclass.z_pending_class.data.DataInfoListener;
 import wclass.z_pending_class.data.DataRemovedListener;
 import wclass.z_pending_class.data.DataSet;
-import wclass.z_pending_class.data.GenerateDataListener;
+import wclass.z_pending_class.data.DataGenerator;
 import wclass.util.ArrayUT;
 import wclass.util.MathUT;
 
@@ -43,6 +43,7 @@ import wclass.util.MathUT;
 public class NaturalQueue<V>
         implements
         Train<V> {
+    private static final boolean DEBUG = false;
     private static final String LF = "\n";
     private static final String VERTI_DIVIDE = "|";
     //----------------------------------------------------------------------
@@ -50,7 +51,7 @@ public class NaturalQueue<V>
     private static final int LINK_SIZE = 8;//小链表大小
     //    private static final int LINK_SIZE = 16;//小链表大小
     //    private static final int LINK_SIZE = 32;//小链表大小。32效率极差。
-    private static final int LOG = MathUT.log2s(LINK_SIZE, 1);//
+    private static final int SHIFT_COUNT = MathUT.log2s(LINK_SIZE, 1);//
     private static final int REST_MASK = LINK_SIZE - 1;//用于取余数
     private static final int STRING_WIDTH = 6;//表格显示时，字符串宽
     //----------------------------------------------------------------------
@@ -68,7 +69,7 @@ public class NaturalQueue<V>
     //----------------------------------------------------------------------
     private SimpleRecycler<Node<V>> recycler;//缓存池
     //----------------------------------------------------------------------
-    private GenerateDataListener<V> generateDataListener;//获取指定位置数据
+    private DataGenerator<V> dataGenerator;//获取指定位置数据
 
     //////////////////////////////////////////////////////////////////////
     public NaturalQueue() {
@@ -97,7 +98,7 @@ public class NaturalQueue<V>
         return new IntMap() {
             @Override
             protected int getHash(int key) {
-                return key >> LOG;
+                return key >> SHIFT_COUNT;
             }
         };
     }
@@ -118,6 +119,198 @@ public class NaturalQueue<V>
         }
         asHead.asHeadAddTail(asTail);
         return asHead;
+    }
+
+    //////////////////////////////////////////////////////////////////////
+    /*step 实现相关*/
+
+    /**
+     * 运行于 2018年11月28日16:23:56
+     * <p>
+     * 获取初始化状态。
+     *
+     * @return true：初始化完毕。false：反之。
+     */
+    @Override
+    public boolean isInit() {
+        return isInit;
+    }
+
+    /**
+     * {@link NaturalQueue#init(int, DataGenerator)}
+     */
+    @Override
+    public void init(DataGenerator<V> dataGenerator) {
+        init(0, dataGenerator);
+    }
+
+    /**
+     * 待调试
+     * 初始化工作。
+     *
+     * @param position             以该位置为原点，加载数据。
+     * @param dataGenerator 用于创建、获取指定位置的数据
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    public void init(int position, DataGenerator<V> dataGenerator) {
+        init(position, position, dataGenerator);
+    }
+
+    @SuppressWarnings("all")
+    @Override
+    public void init(int fromPosition, int toPosition, DataGenerator<V> dataGenerator) {
+        if (fromPosition > toPosition) {
+            throw new IllegalStateException("fromPosition必须小于toPosition。");
+        }
+
+        if (isInit) {
+            removeAll();
+        }
+
+        this.dataGenerator = dataGenerator;
+        indexedMap = onCreateIndexedMap();
+        recycler = onCreateRecycler();
+        recycler.setDefaultDataGenerator(new SimpleRecycler.DefaultDataGenerator<Node<V>>() {
+            @Override
+            public Node<V> onCreate() {
+                return getSmallLink();
+            }
+        });
+        //----------------------------------------------------------------------
+        initImpl(fromPosition, toPosition);
+    }
+
+    //----------------------------------------------------------------------
+
+    /**
+     * 运行于 2018年12月4日17:02:01
+     * <p>
+     * 获取指定位置的数据。
+     * <p>
+     * 友情提示：
+     * 1、每次获取都会检查position，所以效率稍差。
+     *
+     * @param position 数据的位置
+     * @return 指定位置的数据
+     */
+    public V get(int position) {
+        return getNode(position).val;
+    }
+
+    /**
+     * 获取指定位置的数据。
+     * <p>
+     * 友情提示：
+     * 1、每次获取不会检查position，这是不安全的获取方式，
+     * 除非你很确定是有效的position。
+     *
+     * @param position 数据的位置
+     * @return 指定位置的数据
+     */
+    @Override
+    public V getDirectly(int position) {
+        return getDirectNode(position).val;
+    }
+
+
+    /**
+     * 运行于 2018年11月28日14:54:24
+     * <p>
+     * 添加数据至头部。
+     *
+     * @throws NullPointerException 请调用{@link #init}初始化。
+     */
+    @Override
+    public void addHead() {
+        Node<V> futureNext = head;
+        int futureKey = futureNext.key - 1;
+        if (futureKey < 0) {
+            System.err.println("键值不能小于0。");
+            return;
+//            throw new IllegalStateException(toStr_bounds() + "，key不能小于零。");
+        }
+
+        Node<V> futureHead = addBeforeParagraph(futureKey, futureNext);
+        futureHead.val = dataGenerator.onGenerateData(futureKey);
+        head = futureHead;
+
+        size++;
+    }
+
+    /**
+     * 运行于 2018年11月28日14:54:24
+     * <p>
+     * 添加数据至尾部。
+     *
+     * @throws NullPointerException 请调用{@link #init}初始化。
+     */
+    @Override
+    public void addTail() {
+        Node<V> futurePre = tail;
+        int futureKey = futurePre.key + 1;
+
+        Node<V> futureTail = addAfterParagraph(futureKey, futurePre);
+        futureTail.val = dataGenerator.onGenerateData(futureKey);
+        tail = futureTail;
+
+        size++;
+    }
+
+    @Override
+    public void addHead(int count) {
+        int curr = 0;
+        while (canAddHead() && curr < count) {
+            addHead();
+            curr++;
+        }
+    }
+
+    @Override
+    public void addTail(int count) {
+        int curr = 0;
+        while (canAddTail() && curr < count) {
+            addTail();
+            curr++;
+        }
+    }
+
+    /**
+     * 运行于 2018年11月28日15:46:28
+     *
+     * @return 被删除的数据
+     * @throws NullPointerException 请调用{@link #init}初始化。
+     */
+    @Override
+    public V removeHead() {
+        check();
+
+        Node<V> out = head;
+        V val = out.val;
+        head = head.next;
+        handleRemoveHead(out, indexedMap);
+
+        size--;
+        return val;
+    }
+
+    /**
+     * 运行于 2018年11月28日15:46:28
+     *
+     * @return 被删除的数据
+     * @throws NullPointerException 请调用{@link #init}初始化。
+     */
+    @Override
+    public V removeTail() {
+        check();
+
+        Node<V> out = tail;
+        V val = out.val;
+        tail = tail.pre;
+        handleRemoveTail(out, indexedMap);
+
+        size--;
+        return val;
     }
     //////////////////////////////////////////////////////////////////////
     /*step 参数设置*/
@@ -140,7 +333,6 @@ public class NaturalQueue<V>
     }
     //////////////////////////////////////////////////////////////////////
     /*todo 写的不好*/
-
     public int size() {
         return size;
     }
@@ -504,7 +696,7 @@ public class NaturalQueue<V>
 
     @Override
     public void removeAll() {
-        this.removeAll(null);
+        removeAll(null);
     }
 
     /**
@@ -619,97 +811,6 @@ public class NaturalQueue<V>
             need = diListener.onDataInfo(node.key, node.val, number++);
         }
     }
-    //----------------------------------------------------------------------
-
-    /**
-     * 运行于 2018年12月4日17:02:01
-     * <p>
-     * 获取指定位置的数据。
-     * <p>
-     * 友情提示：
-     * 1、每次获取都会检查position，所以效率稍差。
-     *
-     * @param position 数据的位置
-     * @return 指定位置的数据
-     */
-    public V get(int position) {
-        return getNode(position).val;
-    }
-
-    /**
-     * 获取指定位置的数据。
-     * <p>
-     * 友情提示：
-     * 1、每次获取不会检查position，这是不安全的获取方式，
-     * 除非你很确定是有效的position。
-     *
-     * @param position 数据的位置
-     * @return 指定位置的数据
-     */
-    @Override
-    public V getDirectly(int position) {
-        return getDirectNode(position).val;
-    }
-
-
-    /**
-     * 运行于 2018年11月28日14:54:24
-     * <p>
-     * 添加数据至头部。
-     *
-     * @throws NullPointerException 请调用{@link #init}初始化。
-     */
-    @Override
-    public void addHead() {
-        Node<V> futureNext = head;
-        int futureKey = futureNext.key - 1;
-        if (futureKey < 0) {
-            throw new IllegalStateException(toStr_bounds() + "，key不能小于零。");
-        }
-
-        Node<V> futureHead = addBeforeParagraph(futureKey, futureNext);
-        futureHead.val = generateDataListener.onGenerateData(futureKey);
-        head = futureHead;
-
-        size++;
-    }
-
-    /**
-     * 运行于 2018年11月28日14:54:24
-     * <p>
-     * 添加数据至尾部。
-     *
-     * @throws NullPointerException 请调用{@link #init}初始化。
-     */
-    @Override
-    public void addTail() {
-        Node<V> futurePre = tail;
-        int futureKey = futurePre.key + 1;
-
-        Node<V> futureTail = addAfterParagraph(futureKey, futurePre);
-        futureTail.val = generateDataListener.onGenerateData(futureKey);
-        tail = futureTail;
-
-        size++;
-    }
-
-    @Override
-    public void addHead(int count) {
-        int curr = 0;
-        while (canAddHead() && curr < count) {
-            addHead();
-            curr++;
-        }
-    }
-
-    @Override
-    public void addTail(int count) {
-        int curr = 0;
-        while (canAddTail() && curr < count) {
-            addTail();
-            curr++;
-        }
-    }
 
     //----------------------------------------------------------------------
     /*待调试*/
@@ -741,103 +842,6 @@ public class NaturalQueue<V>
     @Override
     public boolean needAddTail() {
         return false;
-    }
-
-    /**
-     * 运行于 2018年11月28日15:46:28
-     *
-     * @return 被删除的数据
-     * @throws NullPointerException 请调用{@link #init}初始化。
-     */
-    @Override
-    public V removeHead() {
-        check();
-
-        Node<V> out = head;
-        V val = out.val;
-        head = head.next;
-        handleRemoveHead(out, indexedMap);
-
-        size--;
-        return val;
-    }
-
-    /**
-     * 运行于 2018年11月28日15:46:28
-     *
-     * @return 被删除的数据
-     * @throws NullPointerException 请调用{@link #init}初始化。
-     */
-    @Override
-    public V removeTail() {
-        check();
-
-        Node<V> out = tail;
-        V val = out.val;
-        tail = tail.pre;
-        handleRemoveTail(out, indexedMap);
-
-        size--;
-        return val;
-    }
-    //////////////////////////////////////////////////////////////////////
-    /*step 实现相关*/
-
-    /**
-     * 运行于 2018年11月28日16:23:56
-     * <p>
-     * 获取初始化状态。
-     *
-     * @return true：初始化完毕。false：反之。
-     */
-    @Override
-    public boolean isInit() {
-        return isInit;
-    }
-
-    /**
-     * {@link NaturalQueue#init(int, GenerateDataListener)}
-     */
-    @Override
-    public void init(GenerateDataListener<V> generateDataListener) {
-        init(0, generateDataListener);
-    }
-
-    /**
-     * 待调试
-     * 初始化工作。
-     *
-     * @param position             以该位置为原点，加载数据。
-     * @param generateDataListener 用于创建、获取指定位置的数据
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public void init(int position, GenerateDataListener<V> generateDataListener) {
-        init(position, position, generateDataListener);
-    }
-
-    @SuppressWarnings("all")
-    @Override
-    public void init(int fromPosition, int toPosition, GenerateDataListener<V> generateDataListener) {
-        if (fromPosition > toPosition) {
-            throw new IllegalStateException("fromPosition必须小于toPosition。");
-        }
-
-        if (isInit) {
-            removeAll();
-        }
-
-        this.generateDataListener = generateDataListener;
-        indexedMap = onCreateIndexedMap();
-        recycler = onCreateRecycler();
-        recycler.setOnCreateListener(new SimpleRecycler.OnCreateListener<Node<V>>() {
-            @Override
-            public Node<V> onCreate() {
-                return getSmallLink();
-            }
-        });
-        //----------------------------------------------------------------------
-        initImpl(fromPosition, toPosition);
     }
     //----------------------------------------------------------------------
 
@@ -888,7 +892,7 @@ public class NaturalQueue<V>
         //找到key对应的节点
         node = getByRest(node, rest);
         node.key = position;
-        node.val = generateDataListener.onGenerateData(position);
+        node.val = dataGenerator.onGenerateData(position);
 
         head = tail = node;
         size = 1;
@@ -1269,7 +1273,6 @@ public class NaturalQueue<V>
         return node;
     }
 
-
     /**
      * 运行于 2018年11月29日15:24:29
      *
@@ -1378,27 +1381,27 @@ public class NaturalQueue<V>
      * <p>
      * 添加尾部小链表。
      *
-     * @param key  键值。
+     * @param tailNextKey  键值。
      *             通过该键值获取余数，为0时，尾部添加新链表，
      *             并设置该链表的头为索引。
-     * @param tail 当前尾节点。
+     * @param currTail 当前尾节点。
      * @return tail.next
      */
-    private Node<V> addAfterParagraph(int key, Node<V> tail) {
-        int rest = key & REST_MASK;
+    private Node<V> addAfterParagraph(int tailNextKey, Node<V> currTail) {
+        int rest = tailNextKey & REST_MASK;
 
         Node<V> tailNext;
         //余数为0时，需要链接新的小链表，并把链表头放入treeMap。
         if (rest == 0) {
             tailNext = recycler.get();
-            tail.putNext(tailNext);
+            currTail.putNext(tailNext);
 
             //作为索引
-            indexedMap.put(key, tailNext);
-            tailNext.key = key;
+            indexedMap.put(tailNextKey, tailNext);
+            tailNext.key = tailNextKey;
         } else {
-            tailNext = tail.next;
-            tailNext.key = key;
+            tailNext = currTail.next;
+            tailNext.key = tailNextKey;
         }
         return tailNext;
     }
@@ -1566,7 +1569,7 @@ public class NaturalQueue<V>
             first = first.next;
         }
 
-        if (!isTailLast()) {
+        if (!isTailLastInSmallLink()) {
             ss.append(VERTI_DIVIDE);
         }
         ss.append(LF)
@@ -1648,8 +1651,8 @@ public class NaturalQueue<V>
     /**
      * {@link #tail}是否是 总链表的最后一个节点。
      */
-    private boolean isTailLast() {
-        return (tail.key & REST_MASK) == 7;
+    private boolean isTailLastInSmallLink() {
+        return (tail.key & REST_MASK) == REST_MASK;
     }
     //////////////////////////////////////////////////////////////////////
     public final class Node<V> {
@@ -1686,6 +1689,11 @@ public class NaturalQueue<V>
         }
 
         //////////////////////////////////////////////////////////////////////
+
+        /**
+         * 一组小链表中，自身作为小链表的头，将参数作为小链表的尾。
+         * @param node 作为小链表的尾的node节点。
+         */
         public void asHeadAddTail(Node<V> node) {
             head = this;
             tail = node;

@@ -5,7 +5,8 @@ import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 
-import wclass.android.ui.view.base_view.UsefulViewGroup;
+import wclass.android.ui.view.base_view.UsefulScrollViewGroup;
+import wclass.enums.Orien2;
 
 /**
  * @作者 做就行了！
@@ -13,8 +14,7 @@ import wclass.android.ui.view.base_view.UsefulViewGroup;
  * @使用说明：
  */
 @SuppressWarnings("unchecked")
-public class ViewPager extends UsefulViewGroup {
-
+public class ViewPager extends UsefulScrollViewGroup {
     private static final boolean DEBUG = true;
     //--------------------------------------------------
     /**
@@ -24,6 +24,9 @@ public class ViewPager extends UsefulViewGroup {
      * ·加载哪个方向，detach另一个方向。
      * //     * 2、通过速率fling。
      * //     * ①记录触摸的最大坐标。
+     * <p>
+     * 2、设计思路：
+     * ①就按“页”设计！！！
      */
     //////////////////////////////////////////////////
     boolean init = false;
@@ -31,6 +34,11 @@ public class ViewPager extends UsefulViewGroup {
     private int h;
     private Context context;
     //////////////////////////////////////////////////
+
+    @Override
+    protected Orien2 getScrollOrien() {
+        return Orien2.HORIZONTAL;
+    }
 
     public ViewPager(Context context) {
         super(context);
@@ -40,12 +48,37 @@ public class ViewPager extends UsefulViewGroup {
 
         }
     }
+
+    public void scrollToPrePosition(int duration) {
+        int position = showPosition - 1;
+        if (attachItemCheckly(position)) {
+            int scrollX = getScrollX(position);
+            smoothScrollTo(scrollX, duration);
+        }
+    }
+
+    public void scrollToNextPosition(int duration) {
+        int position = showPosition + 1;
+        if (attachItemCheckly(position)) {
+            int scrollX = getScrollX(position);
+            smoothScrollTo(scrollX, duration);
+        }
+    }
+
+    public void showPositionDirectly(int position) {
+        if (attachItemCheckly(position)) {
+            int scrollX = getScrollX(position);
+            setScrollX(scrollX);
+        }
+    }
     //////////////////////////////////////////////////
 
     @Override
-    protected boolean needScroll() {
-        return true;
+    protected void onNoTouchScroll_finish() {
+        super.onNoTouchScroll_finish();
     }
+
+
     //////////////////////////////////////////////////
 
     @Override
@@ -67,22 +100,48 @@ public class ViewPager extends UsefulViewGroup {
         if (showPosition == -1) {
             showPosition = 0;
         }
-        attachItem(showPosition);
+        attachItemDirectly(showPosition);
         if (autoLoad) {
-            attachItem(showPosition - 1);
-            attachItem(showPosition + 1);
+            attachItemDirectly(showPosition - 1);
+            attachItemDirectly(showPosition + 1);
         }
     }
 
-    private void attachItem(int position) {
+    private void attachItemDirectly(int position) {
         if (!verifyPosition(position)) {
             return;
         }
         View view = getview(position);
+        items.put(position, new ItemInfo(view, position));
         addView(view);
         measureChild(view);
-        adapter.onLayoutView(view, position, this);
+        adapter.onLayoutItem(view, position, this);
+    }
+    private int getScrollX(int position) {
+        return adapter.getScrollXForPosition(position, this);
+    }
+
+    /**
+     * 将item添加至容器。
+     *
+     * @param position item的下标。
+     * @return true：item已经添加至容器。
+     * false：item未添加至容器，item下标异常。
+     */
+    private boolean attachItemCheckly(int position) {
+        if (!verifyPosition(position)) {
+            return false;
+        }
+        ItemInfo itemInfo = items.get(position);
+        //该position的item已经显示了。
+        if (itemInfo != null) return true;
+
+        View view = getview(position);
         items.put(position, new ItemInfo(view, position));
+        addView(view);
+        measureChild(view);
+        adapter.onLayoutItem(view, position, this);
+        return true;
     }
 
     private boolean verifyPosition(int position) {
@@ -125,7 +184,7 @@ public class ViewPager extends UsefulViewGroup {
 
         public abstract T getView(Context context, int position, int pageW, int pageH);
 
-        public void onLayoutView(T view, int position, ViewPager viewPager) {
+        public void onLayoutItem(T view, int position, ViewPager viewPager) {
             view.layout(getScrollXForPosition(position, viewPager), 0,
                     view.getMeasuredWidth(), view.getMeasuredHeight());
         }

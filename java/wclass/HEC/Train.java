@@ -3,7 +3,7 @@ package wclass.HEC;
 
 import wclass.z_pending_class.data.DataRemovedListener;
 import wclass.z_pending_class.data.DataSet;
-import wclass.z_pending_class.data.GenerateDataListener;
+import wclass.z_pending_class.data.DataGenerator;
 
 /**
  * @作者 做就行了！
@@ -115,19 +115,19 @@ public interface Train<T> extends DataSet<T> {
     boolean isInit();
 
     /**
-     * {@link Train#init(int, GenerateDataListener)}
+     * {@link Train#init(int, DataGenerator)}
      */
-    void init(GenerateDataListener<T> generateDataListener);
+    void init(DataGenerator<T> dataGenerator);
 
     /**
      * 初始化指定位置的数据，并把他作为原点。
      *
      * @param position             以该位置为原点，初始化数据。
-     * @param generateDataListener 用于创建、获取指定位置的数据
+     * @param dataGenerator 用于创建、获取指定位置的数据
      */
-    void init(int position, GenerateDataListener<T> generateDataListener);
+    void init(int position, DataGenerator<T> dataGenerator);
 
-    void init(int fromPosition, int toPosition, GenerateDataListener<T> generateDataListener);
+    void init(int fromPosition, int toPosition, DataGenerator<T> dataGenerator);
 
     /**
      * {@link Train#reInit(int, DataRemovedListener)}

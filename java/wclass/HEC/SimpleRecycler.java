@@ -4,25 +4,42 @@ package wclass.HEC;
 import wclass.y_marks.Ugly_ToString;
 
 /**
- * 完成于 2019年1月25日22:57:00
  * @作者 做就行了！
- * @时间 2018-10-31下午 2:29
+ * @时间 2019-04-30下午 5:57
+ * @该类描述： -
+ * 1、可复用的数据的存放类。
+ * @名词解释： -
  * @该类用途： -
  * @注意事项： -
  * @使用说明： -
  * @思维逻辑： -
+ * @优化记录： -
+ * 1、2019年4月30日18:01:30。
+ * @待解决： -
  */
 @SuppressWarnings("WeakerAccess,unused")
 public class SimpleRecycler<T> {
-//public class SimpleRecycler<T extends Reuse> {
     private static final String SIMPLE_NAME = SimpleRecycler.class.getSimpleName();
     private static final String LF = "\n";
+    /**
+     * 默认的循环池大小。
+     */
     private static final int LIMIT_SIZE = 5;
-    //----------------------------------------------------------------------
-    private int capacity;//总容量
-    //----------------------------------------------------------------------
-    private TempBox<T> tempBox;//缓存容器
-    private OnCreateListener<T> onCreateListener;
+    //////////////////////////////////////////////////
+    /**
+     * 缓存数据的最大容量。
+     */
+    private int capacity;
+
+    /**
+     * 存放缓存数据的容器。
+     */
+    private TempBox<T> tempBox;
+
+    /**
+     * 没有缓存数据时，该类会从接口中获取一次数据，并返回给用户。
+     */
+    private DefaultDataGenerator<T> defaultDataGenerator;
     //////////////////////////////////////////////////////////////////////
 
     /**
@@ -43,6 +60,9 @@ public class SimpleRecycler<T> {
     }
     //////////////////////////////////////////////////////////////////////
 
+    /**
+     * fix 字符串格式不漂亮。
+     */
     @Ugly_ToString
     @Override
     public String toString() {
@@ -53,14 +73,25 @@ public class SimpleRecycler<T> {
     }
     //////////////////////////////////////////////////////////////////////
 
-    public void setOnCreateListener(OnCreateListener<T> listener) {
-        if (onCreateListener != null) {
+    /**
+     * 设置默认数据的生成器。
+     *
+     * @param listener 默认数据的生成器。
+     */
+    public void setDefaultDataGenerator(DefaultDataGenerator<T> listener) {
+        if (defaultDataGenerator != null) {
             throw new IllegalStateException("不能重复设置OnCreateListener。");
         }
-        onCreateListener = listener;
+        defaultDataGenerator = listener;
     }
 
-    public interface OnCreateListener<T> {
+    /**
+     * 默认数据的生成器。
+     * 如果该类没有缓存的数据，则从该接口中获取默认的数据。
+     *
+     * @param <T> 数据类型。
+     */
+    public interface DefaultDataGenerator<T> {
         T onCreate();
     }
     //////////////////////////////////////////////////////////////////////
@@ -75,8 +106,6 @@ public class SimpleRecycler<T> {
         if (item == null || !isFree()) {
             return;
         }
-        //复位、循环该item。
-//        item.onReset();
         tempBox.put(item);
     }
 
@@ -89,12 +118,12 @@ public class SimpleRecycler<T> {
         try {
             //没有，则创建一个。
             if (isEmpty()) {
-                return onCreateListener.onCreate();
+                return defaultDataGenerator.onCreate();
             }
             //有，则取出一个
             return tempBox.poll();
         } catch (NullPointerException e) {
-            throw new IllegalStateException("请调用方法“setOnCreateListener()”。");
+            throw new IllegalStateException("请调用方法“setDefaultDataGenerator()”。");
         }
     }
 
@@ -125,7 +154,7 @@ public class SimpleRecycler<T> {
     }
 
     /**
-     * 容量在限制范围内，则可以继续执行循环操作。
+     * 当前数量在限制范围内，则可以继续执行循环操作。
      *
      * @return true：可以继续循环操作。false：不能再循环操作了。
      */
@@ -134,7 +163,7 @@ public class SimpleRecycler<T> {
     }
 
     /**
-     * 获取当前容量大小。
+     * 获取当前数量。
      */
     public int size() {
         return tempBox.size();

@@ -5,17 +5,23 @@ import java.util.LinkedList;
 import wclass.y_marks.Ugly_ToString;
 
 /**
- * 检查于 2018年11月24日23:03:03
+ * 完成于 2019年4月30日17:48:00
  *
  * @作者 做就行了！
- * @时间 2018-11-18下午 6:10
+ * @时间 2019-04-30下午 5:47
+ * @该类描述： -
+ * @名词解释： -
  * @该类用途： -
- * 1、“E”作为备用，需要时 随便取一个出来。
+ * 1、“E”作为备用对象，需要时，从缓存池的最后一个节点取出数据，并返回。
  * 2、该类 类似{@link LinkedList}，
- * 区别是：不需要每次“new”创建node对象。
+ * 区别是：不需要每次“new”创建携带数据的node对象。
  * @注意事项： -
  * @使用说明： -
  * @思维逻辑： -
+ * @优化记录： -
+ * 1、2019-4-30 17:48:15。
+ * @待解决： -
+ * 1、DEBUG打印的字符串格式不漂亮。
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class TempBox<E> {
@@ -23,11 +29,10 @@ public class TempBox<E> {
     private static final String LF = "\n";
     //----------------------------------------------------------------------
     private static final int DEFAULT_CAPACITY = 5;//默认容量大小。
-    //----------------------------------------------------------------------
+    //////////////////////////////////////////////////
     private Node zero;//该节点作为原点。不保存任何数据。
-    private Node last;//最后一个节点。
-    private Node lastVal;//保存最后一个数据的节点。
-
+    private Node last;//总结点中最后一个节点。
+    private Node lastVal;//最后一个携带数据的节点。
     //////////////////////////////////////////////////////////////////////
 
     /**
@@ -36,43 +41,18 @@ public class TempBox<E> {
     public TempBox() {
         init();
     }
-
-    /**
-     * 初始化。
-     */
-    private void init() {
-        zero = last = lastVal = new Node(0);
-    }
     //////////////////////////////////////////////////////////////////////
-    /*step DEBUG*/
-
-    @Ugly_ToString
-    @Override
-    public String toString() {
-        return "[#TempBox: zero = " + zero.infoToStr()
-                + LF + "last = " + last.infoToStr()
-                + LF + "lastVal = " + lastVal.infoToStr()
-                + " #TempBox]";
-    }
-    //////////////////////////////////////////////////////////////////////
+    /*常用方法。2019年4月30日17:38:29*/
 
     /**
      * 检查于 2019年1月7日22:42:55
      * <p>
-     * 扩充存储容量！！！
-     */
-    private void increaseCapacity() {
-        last.putNext(new Node(last.number + 1));
-        last = last.next;
-    }
-    //////////////////////////////////////////////////////////////////////
-
-    /**
-     * 检查于 2019年1月7日22:42:55
+     * 放入数据。
      * <p>
-     * 放数据。
-     * <p>
-     * 友情提示：满了则扩充。
+     * 警告：
+     * 1、数据满了自动扩充缓存池，再放入数据。
+     * 2、请自行限制存放数量！！！
+     * 3、可通过方法{@link #recapacity(int)}重新调整缓存的数量。
      */
     public void put(E val) {
         if (!isFree()) {
@@ -97,7 +77,6 @@ public class TempBox<E> {
         lastVal = lastVal.pre;
         return val;
     }
-
     //////////////////////////////////////////////////////////////////////
 
     /**
@@ -132,6 +111,52 @@ public class TempBox<E> {
             while (last.number < capacity);
         }
         //等于请求容量，不需要调整，直接返回。
+    }
+
+    /**
+     * 检查于 2019年1月7日22:15:38
+     * <p>
+     * 检查请求容量，适当时抛出异常。
+     *
+     * @param capacity 用户请求的容量
+     */
+    private void checkCapacity(int capacity) {
+        if (capacity <= 0) {
+            throw new IllegalArgumentException("容量只能大于0。");
+        }
+    }
+
+
+    /**
+     * 初始化。
+     */
+    private void init() {
+        zero = last = lastVal = new Node(0);
+    }
+    //////////////////////////////////////////////////////////////////////
+    /*step DEBUG*/
+
+    /**
+     * fix 格式不漂亮。
+     */
+    @Ugly_ToString
+    @Override
+    public String toString() {
+        return "[#TempBox: zero = " + zero.infoToStr()
+                + LF + "last = " + last.infoToStr()
+                + LF + "lastVal = " + lastVal.infoToStr()
+                + " #TempBox]";
+    }
+    //////////////////////////////////////////////////////////////////////
+
+    /**
+     * 检查于 2019年1月7日22:42:55
+     * <p>
+     * 扩充存储容量！！！
+     */
+    private void increaseCapacity() {
+        last.putNext(new Node(last.number + 1));
+        last = last.next;
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -179,20 +204,6 @@ public class TempBox<E> {
      */
     public boolean isFree() {
         return lastVal.next != null;
-    }
-    //////////////////////////////////////////////////////////////////////
-
-    /**
-     * 检查于 2019年1月7日22:15:38
-     * <p>
-     * 检查请求容量，适当时抛出异常。
-     *
-     * @param capacity 用户请求的容量
-     */
-    private void checkCapacity(int capacity) {
-        if (capacity <= 0) {
-            throw new IllegalArgumentException("容量只能大于0 。");
-        }
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -246,6 +257,8 @@ public class TempBox<E> {
             } else {
                 meValStr = "null";
             }
+
+            //fix 格式不漂亮。
             return "[#" + SIMPLE_NAME + ": " +
                     "int number = " + number
                     + ", Node pre = " + preStr

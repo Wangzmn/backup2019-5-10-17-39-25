@@ -90,7 +90,7 @@ public class JVelocityTracker {
 
         sampleSimpleVelocityTracker = onCreateSimpleVelocityTracker();
         recycler = onCreateSimpleRecycler();
-        recycler.setOnCreateListener(new SimpleRecycler.OnCreateListener<PointerNode>() {
+        recycler.setDefaultDataGenerator(new SimpleRecycler.DefaultDataGenerator<PointerNode>() {
             @Override
             public PointerNode onCreate() {
                 try {
