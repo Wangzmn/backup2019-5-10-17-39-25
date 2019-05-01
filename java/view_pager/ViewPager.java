@@ -3,10 +3,12 @@ package view_pager;
 import android.content.Context;
 import android.util.SparseArray;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
 
 import wclass.android.ui.view.base_view.UsefulScrollViewGroup;
 import wclass.enums.Orien2;
+import wclass.ui.event_parser.MultiSingleParser;
 
 /**
  * @作者 做就行了！
@@ -48,11 +50,96 @@ public class ViewPager extends UsefulScrollViewGroup {
 
         }
     }
+    //--------------------------------------------------
+
+    int startScrollX;
+
+    @Override
+    protected void onSetTouchScrollValue(MultiSingleParser parser) {
+        super.onSetTouchScrollValue(parser);
+    }
+
+    @Override
+    protected void onTouchScroll_start(MultiSingleParser parser, MotionEvent ev) {
+        super.onTouchScroll_start(parser, ev);
+        startScrollX = getScrollX();
+    }
+
+    @Override
+    protected void onTouchScroll_finishAndDoFling(MultiSingleParser parser, VelocityTracker vt, MotionEvent ev) {
+        super.onTouchScroll_finishAndDoFling(parser, vt, ev);
+        int currScrollX = getScrollX();
+        int cutScrollX = currScrollX - startScrollX;
+        //往之后。
+        if (cutScrollX > 0) {
+//            if(cutScrollX)
+            //先通过滑动距离判断。
+            if(){
+
+            }
+            //再通过速率判断。
+            else{
+                vt.computeCurrentVelocity(1000);
+                float xVelocity = vt.getXVelocity();
+                if(-xVelocity>w){
+                    //触发下一页。
+                }
+            }
+        }
+        //往之前。
+        else {
+            //先通过滑动距离判断。
+            if(){
+
+            }
+            //再通过速率判断。
+            else{
+                vt.computeCurrentVelocity(1000);
+                float xVelocity = vt.getXVelocity();
+                if(xVelocity>w){
+                    //触发上一页。
+                }
+            }
+
+        }
+        //--------------------------------------------------
+        /*滑动距离触发不了页滑动时，通过速率判断。*/
+        vt.computeCurrentVelocity(1000);
+        float xVelocity = vt.getXVelocity();
+        if (Math.abs(xVelocity )> w) {
+            //往之前。
+            if(xVelocity>0){
+
+            }
+            //往之后。
+            else{
+
+            }
+        }
+    }
+
+    //////////////////////////////////////////////////
+
+    public void showPrePosition(int duration) {
+        int position = showPosition - 1;
+        if (attachItemCheckly(position)) {
+            int scrollX = getscrollX(position);
+            setScrollX(scrollX);
+        }
+    }
+
+    public void showNextPosition() {
+        int position = showPosition + 1;
+        if (attachItemCheckly(position)) {
+            int scrollX = getscrollX(position);
+            setScrollX(scrollX);
+        }
+    }
 
     public void scrollToPrePosition(int duration) {
         int position = showPosition - 1;
         if (attachItemCheckly(position)) {
-            int scrollX = getScrollX(position);
+            int scrollX = getscrollX(position);
             smoothScrollTo(scrollX, duration);
         }
     }
@@ -60,14 +147,14 @@ public class ViewPager extends UsefulScrollViewGroup {
     public void scrollToNextPosition(int duration) {
         int position = showPosition + 1;
         if (attachItemCheckly(position)) {
-            int scrollX = getScrollX(position);
+            int scrollX = getscrollX(position);
             smoothScrollTo(scrollX, duration);
         }
     }
 
     public void showPositionDirectly(int position) {
         if (attachItemCheckly(position)) {
-            int scrollX = getScrollX(position);
+            int scrollX = getscrollX(position);
             setScrollX(scrollX);
         }
     }
@@ -117,7 +204,8 @@ public class ViewPager extends UsefulScrollViewGroup {
         measureChild(view);
         adapter.onLayoutItem(view, position, this);
     }
-    private int getScrollX(int position) {
+
+    private int getscrollX(int position) {
         return adapter.getScrollXForPosition(position, this);
     }
 

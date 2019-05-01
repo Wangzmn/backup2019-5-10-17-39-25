@@ -8,6 +8,7 @@ import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 import android.widget.Scroller;
 
+import wclass.android.util.SizeUT;
 import wclass.enums.Orien2;
 import wclass.enums.Result;
 import wclass.ui.event_parser.MultiSingleParser;
@@ -42,6 +43,7 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
      * 标记：是否为非触摸滑动。
      */
     private boolean isNoTouchScroll;
+    private int screenWidth;
 
     //--------------------------------------------------
     /*方便子类，为子类提供的几个滑动方法。*/
@@ -117,7 +119,8 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
 //        if(DEBUG){
 //            Log.e("TAG",getClass()+"#onTouchEvent:  ");
 //        }
-        isB(ev, true);
+        int actionMasked = ev.getActionMasked();
+        handleEventForScroll(ev, actionMasked );
         return true;
     }
 
@@ -141,12 +144,16 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                 scroller.forceFinished(true);
                 break;
         }
-        b = isB(ev, b);
+        if(needScroll()) {
+            b |= handleEventForScroll(ev, actionMasked);
+        }
         return b;
     }
+    protected boolean needScroll(){
+        return true;
+    }
 
-    private boolean isB(MotionEvent ev, boolean b) {
-        int actionMasked = ev.getActionMasked();
+    private boolean handleEventForScroll(MotionEvent ev, int actionMasked) {
         switch (touchScrollStrategy) {
             case PENDING:
                 if(DEBUG){
@@ -170,7 +177,8 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                         else {
                             touchScrollStrategy = CAN_TOUCH_SCROLL;
                             onTouchScroll_start(parser, ev);
-                            b = true;
+                            //step 触发滑动，返回true，由自己处理事件。
+                            return true;
                         }
                         break;
                     case FALSE:
@@ -194,8 +202,9 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                     onTouchScroll_finish(parser, ev);
                     onTouchScroll_finishAndDoFling(parser, vt, ev);
                 }
-                b = true;
-                break;
+
+                //step 滑动中，返回true，由自己处理事件。
+                return true;
 
             case CANT_TOUCH_SCROLL:
                 if(DEBUG){
@@ -206,7 +215,7 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
             default:
                 throw new IllegalStateException();
         }
-        return b;
+        return false;
     }
 
     //--------------------------------------------------
@@ -259,7 +268,7 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
             default:
                 throw new IllegalStateException();
         }
-    }
+    }0
 
     //--------------------------------------------------
     /*滑动时的回调。*/
@@ -303,9 +312,11 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
     }
 
     protected void onTouchScroll_finishAndDoFling(MultiSingleParser parser, VelocityTracker vt, MotionEvent ev) {
-
         if(DEBUG){
-            Log.e("TAG",getClass()+"#onTouchScroll_finishAndDoFling:  ");
+            vt.computeCurrentVelocity(1000);
+            Log.e("TAG",getClass()+"#onTouchScroll_finishAndDoFling:" +
+                    " 速率 = "+vt.getXVelocity()+" 。" +
+                    " screenWidth = "+screenWidth+" 。");
         }
     }
 
@@ -420,6 +431,7 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
     public UsefulScrollViewGroup(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initScrollComponent();
+        screenWidth = SizeUT.getScreenWidth(context);
     }
 
     private void initScrollComponent() {
