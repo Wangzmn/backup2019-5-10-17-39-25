@@ -12,6 +12,7 @@ import wclass.android.util.SizeUT;
 import wclass.enums.Orien2;
 import wclass.enums.Result;
 import wclass.ui.event_parser.MultiSingleParser;
+import wclass.util.MathUT;
 
 import static wclass.android.ui.view.base_view.UsefulScrollViewGroup.TouchScrollStrategy.CANT_TOUCH_SCROLL;
 import static wclass.android.ui.view.base_view.UsefulScrollViewGroup.TouchScrollStrategy.CAN_TOUCH_SCROLL;
@@ -120,19 +121,20 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
 //            Log.e("TAG",getClass()+"#onTouchEvent:  ");
 //        }
         int actionMasked = ev.getActionMasked();
-        handleEventForScroll(ev, actionMasked );
+        handleEventForScroll(ev, actionMasked);
         return true;
     }
 
     /**
      * fix 返回true时，就到自己的touchEvent中了。
+     *
      * @param ev
      * @return
      */
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if(DEBUG){
-            Log.e("TAG",getClass()+"#onInterceptTouchEvent:  ");
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#onInterceptTouchEvent:  ");
         }
         boolean b = super.onInterceptTouchEvent(ev);
         int actionMasked = ev.getActionMasked();
@@ -144,20 +146,21 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                 scroller.forceFinished(true);
                 break;
         }
-        if(needScroll()) {
+        if (needScroll()) {
             b |= handleEventForScroll(ev, actionMasked);
         }
         return b;
     }
-    protected boolean needScroll(){
+
+    protected boolean needScroll() {
         return true;
     }
 
     private boolean handleEventForScroll(MotionEvent ev, int actionMasked) {
         switch (touchScrollStrategy) {
             case PENDING:
-                if(DEBUG){
-                    Log.e("TAG",getClass()+"#:PENDING  ");
+                if (DEBUG) {
+                    Log.e("TAG", getClass() + "#:PENDING  ");
                 }
                 //只要子view请求一次，就都走这里了。
                 if (isChildRequestEvent()) {
@@ -190,8 +193,8 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                 break;
 
             case CAN_TOUCH_SCROLL:
-                if(DEBUG){
-                    Log.e("TAG",getClass()+"#:CAN_TOUCH_SCROLL  ");
+                if (DEBUG) {
+                    Log.e("TAG", getClass() + "#:CAN_TOUCH_SCROLL  ");
                 }
                 parser.parse(ev);
                 vt.addMovement(ev);
@@ -207,8 +210,8 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                 return true;
 
             case CANT_TOUCH_SCROLL:
-                if(DEBUG){
-                    Log.e("TAG",getClass()+"#:CANT_TOUCH_SCROLL  ");
+                if (DEBUG) {
+                    Log.e("TAG", getClass() + "#:CANT_TOUCH_SCROLL  ");
                 }
                 break;
 
@@ -256,67 +259,73 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
     protected void onSetTouchScrollValue(MultiSingleParser parser) {
         switch (getScrollOrien()) {
             case HORIZONTAL:
+                int delta = (int) (parser.getScrollDeltaX_cutMove() + 0.5f);
+                int scrollX = getScrollX() + delta;
+                scrollX = onLimitScrollValue(scrollX);
                 //横向滑动时，设置X值。
-                scrollBy((int) (parser.getScrollDeltaX_cutMove() + 0.5f),
-                        getScrollY());
+                scrollTo(scrollX, getScrollY());
                 break;
             case VERTICAL:
+                int delta2 = (int) (parser.getScrollDeltaY_cutMove() + 0.5f);
+                int scrollY = delta2 + getScrollY();
+                scrollY = onLimitScrollValue(scrollY);
                 //纵向滑动时，设置Y值
-                scrollBy(getScrollX(),
-                        (int) (parser.getScrollDeltaY_cutMove() + 0.5f));
+                scrollTo(getScrollX(), scrollY);
                 break;
             default:
                 throw new IllegalStateException();
         }
-    }0
-
+    }
+    protected int onLimitScrollValue(int scrollValue){
+        return MathUT.limitMin(scrollValue, 0);
+    }
     //--------------------------------------------------
     /*滑动时的回调。*/
     protected void onNoTouchScroll_start() {
-        if(DEBUG){
-            Log.e("TAG",getClass()+"#onNoTouchScroll_start:  ");
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#onNoTouchScroll_start:  ");
         }
     }
 
     protected void onNoTouchScroll_ing() {
-        if(DEBUG){
-            Log.e("TAG",getClass()+"#onNoTouchScroll_ing:  ");
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#onNoTouchScroll_ing:  ");
         }
     }
 
     protected void onNoTouchScroll_finish() {
 
-        if(DEBUG){
-            Log.e("TAG",getClass()+"#onNoTouchScroll_finish:  ");
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#onNoTouchScroll_finish:  ");
         }
     }
 
     protected void onTouchScroll_start(MultiSingleParser parser, MotionEvent ev) {
 
-        if(DEBUG){
-            Log.e("TAG",getClass()+"#onTouchScroll_start:  ");
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#onTouchScroll_start:  ");
         }
     }
 
     protected void onTouchScroll_ing(MultiSingleParser parser, MotionEvent ev) {
-        if(DEBUG){
-            Log.e("TAG",getClass()+"#onTouchScroll_ing:  ");
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#onTouchScroll_ing:  ");
         }
     }
 
     protected void onTouchScroll_finish(MultiSingleParser parser, MotionEvent ev) {
 
-        if(DEBUG){
-            Log.e("TAG",getClass()+"#onTouchScroll_finish:  ");
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#onTouchScroll_finish:  ");
         }
     }
 
     protected void onTouchScroll_finishAndDoFling(MultiSingleParser parser, VelocityTracker vt, MotionEvent ev) {
-        if(DEBUG){
+        if (DEBUG) {
             vt.computeCurrentVelocity(1000);
-            Log.e("TAG",getClass()+"#onTouchScroll_finishAndDoFling:" +
-                    " 速率 = "+vt.getXVelocity()+" 。" +
-                    " screenWidth = "+screenWidth+" 。");
+            Log.e("TAG", getClass() + "#onTouchScroll_finishAndDoFling:" +
+                    " 速率 = " + vt.getXVelocity() + " 。" +
+                    " screenWidth = " + screenWidth + " 。");
         }
     }
 
@@ -338,21 +347,21 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                     return Result.FALSE;
                 }
                 //横向大幅移动，触发横向滑动。
-                if(!parser.isWormX()){
+                if (!parser.isWormX()) {
                     return Result.TRUE;
                 }
                 //待验证。
-                else{
+                else {
                     return Result.PENDING;
                 }
 
             case VERTICAL:
                 //横向大幅移动，不能纵向滑动。
-                if(!parser.isWormX()){
+                if (!parser.isWormX()) {
                     return Result.FALSE;
                 }
                 //纵向大幅移动，触发纵向滑动。
-                if(!parser.isWormY()){
+                if (!parser.isWormY()) {
                     return Result.TRUE;
                 }
                 return Result.PENDING;

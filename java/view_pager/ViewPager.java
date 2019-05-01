@@ -1,6 +1,7 @@
 package view_pager;
 
 import android.content.Context;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -9,11 +10,21 @@ import android.view.View;
 import wclass.android.ui.view.base_view.UsefulScrollViewGroup;
 import wclass.enums.Orien2;
 import wclass.ui.event_parser.MultiSingleParser;
+import wclass.util.MathUT;
 
 /**
  * @作者 做就行了！
- * @时间 2019/4/28 0028
- * @使用说明：
+ * @时间 2019-05-02上午 12:44
+ * @该类描述： -
+ * @名词解释： -
+ * @该类用途： -
+ * @注意事项： -
+ * @使用说明： -
+ * @思维逻辑： -
+ * @优化记录： -
+ * @待解决： -
+ * todo
+ * 1、添加功能：最多保留多少个item。
  */
 @SuppressWarnings("unchecked")
 public class ViewPager extends UsefulScrollViewGroup {
@@ -31,148 +42,197 @@ public class ViewPager extends UsefulScrollViewGroup {
      * ①就按“页”设计！！！
      */
     //////////////////////////////////////////////////
-    boolean init = false;
-    private int w;
-    private int h;
+
+    /**
+     * 上下文。
+     */
     private Context context;
+    /**
+     * 可见的item的下标。
+     */
+    private int sightPosition = -1;
+    /**
+     * 适配器类。{@link Adapter}
+     */
+    private Adapter mAdapter;
+    /**
+     * 是否需要预加载。
+     */
+    private boolean preload = true;
+    /**
+     * 存放ViewGroup中的item的view。
+     */
+    private SparseArray<ItemInfo> items = new SparseArray<>();
+    //--------------------------------------------------
+    /**
+     * 标记：该类是否初始化。
+     */
+    private boolean init = false;
+    /**
+     * ViewPager的宽。
+     */
+    private int w;
+    /**
+     * ViewPager的高。
+     */
+    private int h;
+    /**
+     * 开始滑动时，记录滑动值。
+     */
+    private int startScrollX;
+    /**
+     * 开始滑动时，记录X方向的最大滑动值。
+     */
+    private int maxScrollXAtTouchScrollStart;
     //////////////////////////////////////////////////
 
-    @Override
-    protected Orien2 getScrollOrien() {
-        return Orien2.HORIZONTAL;
-    }
-
+    /**
+     * 构造方法。
+     *
+     * @param context 上下文。
+     */
     public ViewPager(Context context) {
         super(context);
         this.context = context;
+    }
+    //////////////////////////////////////////////////
 
-        if (DEBUG) {
-
+    /**
+     * 除了可见的item，将其他item从ViewGroup中删除。
+     */
+    public void detachOther() {
+        for (int i = items.size() - 1; i >= 0; i--) {
+            int key = items.keyAt(i);
+            if (sightPosition != key) {
+                detachItem(key);
+            }
         }
     }
     //--------------------------------------------------
 
-    int startScrollX;
+    /**
+     * 显示指定位置的item。
+     *
+     * @param position item的下标。
+     */
+    public void showPosition(int position) {
+        if (attachItemCheckly(position)) {
+            sightPosition = position;
+            int scrollX = getscrollXForPosition(sightPosition);
+            setScrollX(scrollX);
+        }
+    }
+
+    /**
+     * 直接显示上一个下标的item。
+     */
+    public void showPrePosition() {
+        int position = sightPosition - 1;
+        if (attachItemCheckly(position)) {
+            int scrollX = getscrollXForPosition(position);
+            setScrollX(scrollX);
+            sightPosition = position;
+        }
+    }
+
+    /**
+     * 直接显示下一个下标的item。
+     */
+    public void showNextPosition() {
+        int position = sightPosition + 1;
+        if (attachItemCheckly(position)) {
+            int scrollX = getscrollXForPosition(position);
+            setScrollX(scrollX);
+            sightPosition = position;
+        }
+    }
+
+    /**
+     * 滑动至上一个下标的item。
+     */
+    public void scrollToPrePosition(int duration) {
+        int position = sightPosition - 1;
+        if (attachItemCheckly(position)) {
+            int scrollX = getscrollXForPosition(position);
+            smoothScrollTo(scrollX, duration);
+            sightPosition = position;
+        }
+    }
+
+    /**
+     * 滑动至下一个下标的item。
+     */
+    public void scrollToNextPosition(int duration) {
+        int position = sightPosition + 1;
+        if (attachItemCheckly(position)) {
+            int scrollX = getscrollXForPosition(position);
+            smoothScrollTo(scrollX, duration);
+            sightPosition = position;
+        }
+    }
+
+    //--------------------------------------------------
+
+
+    private void detachItem(int position) {
+        ItemInfo itemInfo = items.get(position);
+        items.remove(position);//集合类中删除item。
+        removeView(itemInfo.view);//ViewGroup中删除item。
+
+        //通知adapter。
+        mAdapter.onDetachView(itemInfo.view,
+                position);
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#showPosition:" +
+                    " 当前item数量为：" + items.size());
+        }
+    }
+    //////////////////////////////////////////////////
 
     @Override
-    protected void onSetTouchScrollValue(MultiSingleParser parser) {
-        super.onSetTouchScrollValue(parser);
+    protected int onLimitScrollValue(int scrollValue) {
+        return MathUT.limit(scrollValue, 0, maxScrollXAtTouchScrollStart);
     }
 
     @Override
     protected void onTouchScroll_start(MultiSingleParser parser, MotionEvent ev) {
         super.onTouchScroll_start(parser, ev);
+        //记录开始滑动时的scrollX。
         startScrollX = getScrollX();
+        //记录scrollX的最大值。
+        maxScrollXAtTouchScrollStart = mAdapter.getScrollXForPosition(
+                mAdapter.getItemCount() - 1, this);
     }
+
 
     @Override
     protected void onTouchScroll_finishAndDoFling(MultiSingleParser parser, VelocityTracker vt, MotionEvent ev) {
         super.onTouchScroll_finishAndDoFling(parser, vt, ev);
-        int currScrollX = getScrollX();
-        int cutScrollX = currScrollX - startScrollX;
-        //往之后。
-        if (cutScrollX > 0) {
-//            if(cutScrollX)
-            //先通过滑动距离判断。
-            if(){
 
-            }
-            //再通过速率判断。
-            else{
-                vt.computeCurrentVelocity(1000);
-                float xVelocity = vt.getXVelocity();
-                if(-xVelocity>w){
-                    //触发下一页。
+        int finishScrollX = getScrollX();
+        int position = mAdapter.getAutoScrollToPosition(sightPosition,
+                startScrollX, finishScrollX, vt);
+        if (attachItemCheckly(position)) {
+            sightPosition = position;
+            smoothScrollTo(mAdapter.getScrollXForPosition(position, this));
+
+            if (preload) {
+                //多添加一个。
+                if (finishScrollX > startScrollX) {
+                    attachItemCheckly(position + 1);
+                } else {
+                    attachItemCheckly(position - 1);
                 }
             }
         }
-        //往之前。
-        else {
-            //先通过滑动距离判断。
-            if(){
-
-            }
-            //再通过速率判断。
-            else{
-                vt.computeCurrentVelocity(1000);
-                float xVelocity = vt.getXVelocity();
-                if(xVelocity>w){
-                    //触发上一页。
-                }
-            }
-
-        }
-        //--------------------------------------------------
-        /*滑动距离触发不了页滑动时，通过速率判断。*/
-        vt.computeCurrentVelocity(1000);
-        float xVelocity = vt.getXVelocity();
-        if (Math.abs(xVelocity )> w) {
-            //往之前。
-            if(xVelocity>0){
-
-            }
-            //往之后。
-            else{
-
-            }
-        }
     }
-
-    //////////////////////////////////////////////////
-
-    public void showPrePosition(int duration) {
-        int position = showPosition - 1;
-        if (attachItemCheckly(position)) {
-            int scrollX = getscrollX(position);
-            setScrollX(scrollX);
-        }
-    }
-
-    public void showNextPosition() {
-        int position = showPosition + 1;
-        if (attachItemCheckly(position)) {
-            int scrollX = getscrollX(position);
-            setScrollX(scrollX);
-        }
-    }
-
-    public void scrollToPrePosition(int duration) {
-        int position = showPosition - 1;
-        if (attachItemCheckly(position)) {
-            int scrollX = getscrollX(position);
-            smoothScrollTo(scrollX, duration);
-        }
-    }
-
-    public void scrollToNextPosition(int duration) {
-        int position = showPosition + 1;
-        if (attachItemCheckly(position)) {
-            int scrollX = getscrollX(position);
-            smoothScrollTo(scrollX, duration);
-        }
-    }
-
-    public void showPositionDirectly(int position) {
-        if (attachItemCheckly(position)) {
-            int scrollX = getscrollX(position);
-            setScrollX(scrollX);
-        }
-    }
-    //////////////////////////////////////////////////
-
-    @Override
-    protected void onNoTouchScroll_finish() {
-        super.onNoTouchScroll_finish();
-    }
-
-
     //////////////////////////////////////////////////
 
     @Override
     protected void onSizeChangedSafely(int w, int h) {
+        super.onSizeChangedSafely(w, h);
         this.w = w;
         this.h = h;
-        super.onSizeChangedSafely(w, h);
 
         if (!init) {
             init = true;
@@ -180,20 +240,23 @@ public class ViewPager extends UsefulScrollViewGroup {
         }
     }
 
-    Adapter adapter;
-    SparseArray<ItemInfo> items = new SparseArray<>();
-
     private void init() {
-        if (showPosition == -1) {
-            showPosition = 0;
+        if (sightPosition == -1) {
+            sightPosition = 0;
         }
-        attachItemDirectly(showPosition);
-        if (autoLoad) {
-            attachItemDirectly(showPosition - 1);
-            attachItemDirectly(showPosition + 1);
+        attachItemDirectly(sightPosition);
+        if (preload) {
+            attachItemDirectly(sightPosition - 1);
+            attachItemDirectly(sightPosition + 1);
         }
     }
 
+    /**
+     * 直接将item添加至ViewGroup。
+     * 初始化时使用的方法。
+     *
+     * @param position item的下标。
+     */
     private void attachItemDirectly(int position) {
         if (!verifyPosition(position)) {
             return;
@@ -202,15 +265,13 @@ public class ViewPager extends UsefulScrollViewGroup {
         items.put(position, new ItemInfo(view, position));
         addView(view);
         measureChild(view);
-        adapter.onLayoutItem(view, position, this);
-    }
-
-    private int getscrollX(int position) {
-        return adapter.getScrollXForPosition(position, this);
+        mAdapter.onLayoutItem(view, position, this);
     }
 
     /**
      * 将item添加至容器。
+     * <p>
+     * 友情提示：添加至容器之前，检查是否已经添加至容器。
      *
      * @param position item的下标。
      * @return true：item已经添加至容器。
@@ -228,32 +289,64 @@ public class ViewPager extends UsefulScrollViewGroup {
         items.put(position, new ItemInfo(view, position));
         addView(view);
         measureChild(view);
-        adapter.onLayoutItem(view, position, this);
+        mAdapter.onLayoutItem(view, position, this);
         return true;
     }
 
+    /**
+     * 验证下标是否正常。
+     *
+     * @param position 下标。
+     * @return true：下标正常。
+     */
     private boolean verifyPosition(int position) {
-        return position >= 0 && position < adapter.getItemCount();
+        return position >= 0 && position < mAdapter.getItemCount();
     }
 
-    boolean autoLoad = true;
-
-    class ItemInfo {
-        View view;
-
-        ItemInfo(View view, int position) {
-            this.view = view;
+    /**
+     * 设置适配器。
+     *
+     * @param adapter {@link Adapter}
+     */
+    public void setAdapter(Adapter adapter) {
+        if (mAdapter != null) {
+            throw new IllegalStateException("不能重复设置adapter。");
         }
+        mAdapter = adapter;
+        adapter.setViewPager(this);
+    }
+
+    /**
+     * 获取主要的可见的item的下标。
+     */
+    public int getSightPosition() {
+        return sightPosition;
+    }
+    //--------------------------------------------------
+
+    private int getscrollXForPosition(int position) {
+        return mAdapter.getScrollXForPosition(position, this);
     }
 
     private View getview(int position) {
-        return adapter.getView(context, position, w, h);
+        return mAdapter.getView(context, position, w, h);
+    }
+    //////////////////////////////////////////////////
+
+    class ItemInfo {
+        View view;
+        private int position;
+
+        ItemInfo(View view, int position) {
+            this.view = view;
+            this.position = position;
+        }
     }
 
-    int showPosition = -1;
-
-    public abstract class Adapter<T extends View> {
+    @SuppressWarnings("WeakerAccess")
+    public static abstract class Adapter<T extends View> {
         /**
+         * {@link ViewPager}
          * 该变量只能在{@link Adapter}的方法中使用。
          */
         ViewPager mViewPager;
@@ -262,6 +355,12 @@ public class ViewPager extends UsefulScrollViewGroup {
             return mViewPager;
         }
 
+        /**
+         * 设置ViewPager。
+         * 友情提示：由ViewPager类调用。
+         *
+         * @param viewPager viewPager。
+         */
         private void setViewPager(ViewPager viewPager) {
             if (mViewPager != null) {
                 throw new IllegalStateException("不能重复设置adapter。");
@@ -270,37 +369,146 @@ public class ViewPager extends UsefulScrollViewGroup {
         }
         //////////////////////////////////////////////////
 
+        /**
+         * 获取item的view。
+         *
+         * @param context  上下文。
+         * @param position item的下标。
+         * @param pageW    viewPager的宽。
+         * @param pageH    viewPager的高。
+         * @return item的view。
+         */
         public abstract T getView(Context context, int position, int pageW, int pageH);
 
+        /**
+         * 布局item。
+         * <p>
+         * 友情提示：默认实现了一种常用的布局方式。
+         *
+         * @param view      item的view。
+         * @param position  item的下标。
+         * @param viewPager viewPager。
+         */
         public void onLayoutItem(T view, int position, ViewPager viewPager) {
-            view.layout(getScrollXForPosition(position, viewPager), 0,
-                    view.getMeasuredWidth(), view.getMeasuredHeight());
+            int scrollX = getScrollXForPosition(position, viewPager);
+            view.layout(scrollX, 0,
+                    scrollX + view.getMeasuredWidth(), view.getMeasuredHeight());
         }
 
+        /**
+         * 取消附着item。
+         * <p>
+         * 友情提示：取消附着后，item的view就已经脱离了ViewGroup。
+         *
+         * @param view     item的view。
+         * @param position item的下标。
+         */
         public abstract void onDetachView(T view, int position);
 
         //////////////////////////////////////////////////
         /*domain 自己看着办吧，重写吧。*/
 
         /**
-         * 获取指定下标的view所在的滑动值。
+         * 获取item布局时所在的X方向的滑动值。
          *
-         * @param position view的下标。
-         * @return view所在的滑动值。
+         * @param position item的下标。
+         * @return item的view所在的X方向的滑动值。
          */
         public int getScrollXForPosition(int position, ViewPager viewPager) {
             return position * viewPager.getWidth();
         }
 
+        /**
+         * 获取item的数量。
+         */
         public abstract int getItemCount();
 
+        /**
+         * 当容器触发滑动之前，最后一次询问子view是否需要此次touchEvent。
+         *
+         * @param ev 事件。
+         * @return true：子view需要自己处理事件。false：子view不需要处理事件。
+         */
         public boolean lastAskChildNeedEventBeforeScroll(MotionEvent ev) {
             return false;
         }
+
+        /**
+         * 根据当前的滑动值，计算出需要自动滑动到的item的position。
+         * <p>
+         * 友情提示：默认提供了一个常用的算法。
+         *
+         * @param startPosition 滑动开始时的item的下标。
+         * @param startScrollX  滑动开始时的scrollX。
+         * @param currScrollX   当前的scrollX。
+         * @param vt            速率。
+         * @return 根据当前的滑动值，计算出需要自动滑动到的item的position。
+         */
+        public int getAutoScrollToPosition(int startPosition, int startScrollX, int currScrollX, VelocityTracker vt) {
+            ViewPager viewPager = getViewPager();
+            int cutScrollX = currScrollX - startScrollX;
+            //往之后。
+            if (cutScrollX > 0) {
+                int nextPosition = startPosition + 1;
+                if (nextPosition >= getItemCount()) {
+                    return startPosition;
+                }
+                int scrollX = getScrollXForPosition(nextPosition, viewPager);
+                //先通过滑动距离判断。
+                if (currScrollX > scrollX - viewPager.getWidth() / 2) {
+                    return nextPosition;
+                }
+                //再通过速率判断。
+                else {
+                    vt.computeCurrentVelocity(1000);
+                    float xVelocity = vt.getXVelocity();
+                    if (-xVelocity > viewPager.getWidth()) {
+                        //触发下一页。
+                        return nextPosition;
+                    }
+                    //没触发页滑动，执行复位滑动。
+                    else {
+                        return startPosition;
+                    }
+                }
+            }
+            //往之前。
+            else {
+                int lastPosition = startPosition - 1;
+                if (lastPosition < 0) {
+                    return startPosition;
+                }
+                int scrollX = getScrollXForPosition(lastPosition, getViewPager());
+                //先通过滑动距离判断。
+                if (currScrollX < scrollX + viewPager.getWidth() / 2) {
+                    return lastPosition;
+                }
+                //再通过速率判断。
+                else {
+                    vt.computeCurrentVelocity(1000);
+                    float xVelocity = vt.getXVelocity();
+                    if (xVelocity > viewPager.getWidth()) {
+                        //触发上一页。
+                        return lastPosition;
+                    }
+                    //没触发页滑动，执行复位滑动。
+                    else {
+                        return startPosition;
+                    }
+                }
+
+            }
+        }
     }
 
+    //////////////////////////////////////////////////
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
 
+    }
+
+    @Override
+    protected Orien2 getScrollOrien() {
+        return Orien2.HORIZONTAL;
     }
 }
