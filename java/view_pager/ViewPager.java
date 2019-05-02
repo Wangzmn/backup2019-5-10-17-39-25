@@ -8,6 +8,7 @@ import android.view.VelocityTracker;
 import android.view.View;
 
 import wclass.android.ui.view.base_view.UsefulScrollViewGroup;
+import wclass.android.util.debug.ToStrUT;
 import wclass.enums.Orien2;
 import wclass.ui.event_parser.MultiSingleParser;
 import wclass.util.MathUT;
@@ -29,32 +30,20 @@ import wclass.util.MathUT;
 @SuppressWarnings("unchecked")
 public class ViewPager extends UsefulScrollViewGroup {
     private static final boolean DEBUG = true;
-    //--------------------------------------------------
-    /**
-     * todo 问题枚举：
-     * 1、超出指定数量时，Detach最早的item。
-     * ①解决：
-     * ·加载哪个方向，detach另一个方向。
-     * //     * 2、通过速率fling。
-     * //     * ①记录触摸的最大坐标。
-     * <p>
-     * 2、设计思路：
-     * ①就按“页”设计！！！
-     */
     //////////////////////////////////////////////////
 
     /**
      * 上下文。
      */
-    private Context context;
-    /**
-     * 可见的item的下标。
-     */
-    private int sightPosition = -1;
+    private final Context mContext;
     /**
      * 适配器类。{@link Adapter}
      */
     private Adapter mAdapter;
+    /**
+     * 可见的item的下标。
+     */
+    private int sightPosition = -1;
     /**
      * 是否需要预加载。
      */
@@ -84,18 +73,59 @@ public class ViewPager extends UsefulScrollViewGroup {
      * 开始滑动时，记录X方向的最大滑动值。
      */
     private int maxScrollXAtTouchScrollStart;
+    /**
+     * item同时存在的数量。
+     */
+    private int mCacheCount;
+
     //////////////////////////////////////////////////
 
     /**
      * 构造方法。
-     *
-     * @param context 上下文。
      */
-    public ViewPager(Context context) {
+    public ViewPager(Context mContext, Adapter mAdapter) {
+        this(mContext, mAdapter, 3);
+    }
+
+    /**
+     * 构造方法。
+     *
+     * @param context    上下文。
+     * @param cacheCount item同时存在的数量。
+     */
+    public ViewPager(Context context, Adapter adapter, int cacheCount) {
         super(context);
-        this.context = context;
+        mContext = context;
+        mAdapter = adapter;
+
+        mAdapter.setViewPager(this);
+        setCacheCount(cacheCount);
     }
     //////////////////////////////////////////////////
+
+    //    /**
+//     * 设置适配器。
+//     *
+//     * @param adapter {@link Adapter}
+//     */
+//    public void setAdapter(Adapter adapter) {
+//        if (mAdapter != null) {
+//            throw new IllegalStateException("不能重复设置adapter。");
+//        }
+//        mAdapter = adapter;
+//        adapter.setViewPager(this);
+//    }
+    public Adapter getAdapter() {
+        return mAdapter;
+    }
+
+    /**
+     * 获取主要的可见的item的下标。
+     */
+    public int getSightPosition() {
+        return sightPosition;
+    }
+    //--------------------------------------------------
 
     /**
      * 除了可见的item，将其他item从ViewGroup中删除。
@@ -108,6 +138,10 @@ public class ViewPager extends UsefulScrollViewGroup {
             }
         }
     }
+
+    public void setCacheCount(int cacheCount) {
+        mCacheCount = MathUT.limitMin(cacheCount, 1);
+    }
     //--------------------------------------------------
 
     /**
@@ -116,10 +150,12 @@ public class ViewPager extends UsefulScrollViewGroup {
      * @param position item的下标。
      */
     public void showPosition(int position) {
-        if (attachItemCheckly(position)) {
+        if (attachItemChecked(position, true)) {
             sightPosition = position;
-            int scrollX = getscrollXForPosition(sightPosition);
+            int scrollX = _getScrollXForPosition(sightPosition);
             setScrollX(scrollX);
+            //step 直接显示时，直接取消附着。
+            detach(true);
         }
     }
 
@@ -128,10 +164,11 @@ public class ViewPager extends UsefulScrollViewGroup {
      */
     public void showPrePosition() {
         int position = sightPosition - 1;
-        if (attachItemCheckly(position)) {
-            int scrollX = getscrollXForPosition(position);
+        if (attachItemChecked(position, true)) {
+            int scrollX = _getScrollXForPosition(position);
             setScrollX(scrollX);
-            sightPosition = position;
+            //step 直接显示时，直接取消附着。
+            detach(true);
         }
     }
 
@@ -140,10 +177,11 @@ public class ViewPager extends UsefulScrollViewGroup {
      */
     public void showNextPosition() {
         int position = sightPosition + 1;
-        if (attachItemCheckly(position)) {
-            int scrollX = getscrollXForPosition(position);
+        if (attachItemChecked(position, true)) {
+            int scrollX = _getScrollXForPosition(position);
             setScrollX(scrollX);
-            sightPosition = position;
+            //step 直接显示时，直接取消附着。
+            detach(true);
         }
     }
 
@@ -152,10 +190,12 @@ public class ViewPager extends UsefulScrollViewGroup {
      */
     public void scrollToPrePosition(int duration) {
         int position = sightPosition - 1;
-        if (attachItemCheckly(position)) {
-            int scrollX = getscrollXForPosition(position);
+        if (attachItemChecked(position, true)) {
+            int scrollX = _getScrollXForPosition(position);
             smoothScrollTo(scrollX, duration);
-            sightPosition = position;
+            /**
+             * step 取消附着item在{@link #onNoTouchScroll_finish()}方法中。
+             */
         }
     }
 
@@ -164,27 +204,12 @@ public class ViewPager extends UsefulScrollViewGroup {
      */
     public void scrollToNextPosition(int duration) {
         int position = sightPosition + 1;
-        if (attachItemCheckly(position)) {
-            int scrollX = getscrollXForPosition(position);
+        if (attachItemChecked(position, true)) {
+            int scrollX = _getScrollXForPosition(position);
             smoothScrollTo(scrollX, duration);
-            sightPosition = position;
-        }
-    }
-
-    //--------------------------------------------------
-
-
-    private void detachItem(int position) {
-        ItemInfo itemInfo = items.get(position);
-        items.remove(position);//集合类中删除item。
-        removeView(itemInfo.view);//ViewGroup中删除item。
-
-        //通知adapter。
-        mAdapter.onDetachView(itemInfo.view,
-                position);
-        if (DEBUG) {
-            Log.e("TAG", getClass() + "#showPosition:" +
-                    " 当前item数量为：" + items.size());
+            /**
+             * step 取消附着item在{@link #onNoTouchScroll_finish()}方法中。
+             */
         }
     }
     //////////////////////////////////////////////////
@@ -204,28 +229,52 @@ public class ViewPager extends UsefulScrollViewGroup {
                 mAdapter.getItemCount() - 1, this);
     }
 
+    /**
+     * 标记：true，往之后滑动。
+     */
+    boolean arrowToLast = true;
 
     @Override
     protected void onTouchScroll_finishAndDoFling(MultiSingleParser parser, VelocityTracker vt, MotionEvent ev) {
         super.onTouchScroll_finishAndDoFling(parser, vt, ev);
-
         int finishScrollX = getScrollX();
+        arrowToLast = finishScrollX > startScrollX;
         int position = mAdapter.getAutoScrollToPosition(sightPosition,
                 startScrollX, finishScrollX, vt);
-        if (attachItemCheckly(position)) {
-            sightPosition = position;
+        if (attachItemChecked(position, true)) {
             smoothScrollTo(mAdapter.getScrollXForPosition(position, this));
-
-            if (preload) {
-                //多添加一个。
-                if (finishScrollX > startScrollX) {
-                    attachItemCheckly(position + 1);
-                } else {
-                    attachItemCheckly(position - 1);
-                }
-            }
         }
     }
+    //--------------------------------------------------
+
+    @Override
+    protected void onNoTouchScroll_finish() {
+        super.onNoTouchScroll_finish();
+        //缓存的item的数量不是1个时，就往滑动的方向添加1个。
+        if(mCacheCount != 1) {
+            if (arrowToLast) {
+                attachItemChecked(sightPosition + 1, false);
+            } else {
+                attachItemChecked(sightPosition - 1, false);
+            }
+        }
+
+        //往之后滑动，取消附着头方向的item。
+        if (arrowToLast) {
+            detach(true);
+        }
+        //往之前滑动，取消附着尾方向的item。
+        else {
+            detach(false);
+        }
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#onNoTouchScroll_finish:" +
+                    " 主item的key = " + sightPosition + " 。" +
+                     ToStrUT.sparseKeyToStr(items) + " 。");
+        }
+    }
+
+
     //////////////////////////////////////////////////
 
     @Override
@@ -233,21 +282,25 @@ public class ViewPager extends UsefulScrollViewGroup {
         super.onSizeChangedSafely(w, h);
         this.w = w;
         this.h = h;
-
+        mAdapter.onSizeChangedSafely(this, w, h);
         if (!init) {
             init = true;
             init();
         }
     }
 
+    /**
+     * 初始化。
+     */
     private void init() {
         if (sightPosition == -1) {
             sightPosition = 0;
         }
-        attachItemDirectly(sightPosition);
+        attachItemForInit(sightPosition);
+
         if (preload) {
-            attachItemDirectly(sightPosition - 1);
-            attachItemDirectly(sightPosition + 1);
+            attachItemForInit(sightPosition - 1);
+            attachItemForInit(sightPosition + 1);
         }
     }
 
@@ -257,14 +310,23 @@ public class ViewPager extends UsefulScrollViewGroup {
      *
      * @param position item的下标。
      */
-    private void attachItemDirectly(int position) {
-        if (!verifyPosition(position)) {
+    private void attachItemForInit(int position) {
+        if (!verifyDex(position)) {
             return;
         }
-        View view = getview(position);
+        addItem(position);
+    }
+
+    /**
+     * 将item添加至ViewGroup。
+     *
+     * @param position item的下标。
+     */
+    private void addItem(int position) {
+        View view = _getView(position);
         items.put(position, new ItemInfo(view, position));
         addView(view);
-        measureChild(view);
+        mAdapter.onMeasureItem(view, position, this);
         mAdapter.onLayoutItem(view, position, this);
     }
 
@@ -277,21 +339,95 @@ public class ViewPager extends UsefulScrollViewGroup {
      * @return true：item已经添加至容器。
      * false：item未添加至容器，item下标异常。
      */
-    private boolean attachItemCheckly(int position) {
-        if (!verifyPosition(position)) {
+    private boolean attachItemChecked(int position, boolean isMainPosition) {
+        if (!verifyDex(position)) {
             return false;
         }
-        ItemInfo itemInfo = items.get(position);
-        //该position的item已经显示了。
-        if (itemInfo != null) return true;
-
-        View view = getview(position);
-        items.put(position, new ItemInfo(view, position));
-        addView(view);
-        measureChild(view);
-        mAdapter.onLayoutItem(view, position, this);
+        //item不存在时，需要添加。
+        if (!verifyExist(position)) {
+            addItem(position);
+        }
+        if (isMainPosition) {
+            sightPosition = position;
+        }
         return true;
     }
+
+    //todo 打印集合类中每个item的position。
+
+    private void detach(boolean fromHead) {
+        detach(items.size() - mCacheCount, fromHead);
+    }
+
+    /**
+     * 取消附着指定数量的item。
+     *
+     * @param count     取消附着的item的数量。
+     * @param fromFirst true：从第一个开始取消附着。
+     *                  false：从最后一个开始取消附着。
+     */
+    private void detach(int count, boolean fromFirst) {
+        for (int i = 0; i < count; i++) {
+            if (fromFirst) {
+                int key = items.keyAt(0);
+                if (key != sightPosition) {
+                    detachItem(key);
+                }
+                //头部第一个为主要的item。此时转为尾部取消附着。
+                else {
+                    fromFirst = false;
+                    key = items.keyAt(items.size() - 1);
+                    if (key != sightPosition) {
+                        detachItem(key);
+                    }
+                }
+            }
+            //从尾部取消附着。
+            else {
+                int key = items.keyAt(items.size() - 1);
+                if (key != sightPosition) {
+                    detachItem(key);
+                }
+                //尾部最后一个为主要的item。此时转为头部取消附着。
+                else {
+                    fromFirst = true;
+                    key = items.keyAt(0);
+                    if (key != sightPosition) {
+                        detachItem(key);
+                    }
+                }
+
+            }
+        }
+    }
+
+    //--------------------------------------------------
+
+    /**
+     * 取消附着指定的item。
+     *
+     * @param detachPosition item的下标。
+     */
+    private void detachItem(int detachPosition) {
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#detachItem开始:" +
+                    " detachPosition = " + detachPosition + " 。" +"\n"+
+                    " 当前item数量为：" + items.size());
+        }
+        ItemInfo itemInfo = items.get(detachPosition);
+        items.remove(detachPosition);//集合类中删除item。
+        removeView(itemInfo.view);//ViewGroup中删除item。
+
+        //通知adapter。
+        mAdapter.onDetachView(itemInfo.view,
+                detachPosition);
+        if (DEBUG) {
+            Log.e("TAG", getClass() + "#detachItem结束:" +
+                    " 主item的key = " + sightPosition + " 。" +
+                    ToStrUT.sparseKeyToStr(items) + " 。");
+        }
+    }
+    //--------------------------------------------------
 
     /**
      * 验证下标是否正常。
@@ -299,43 +435,33 @@ public class ViewPager extends UsefulScrollViewGroup {
      * @param position 下标。
      * @return true：下标正常。
      */
-    private boolean verifyPosition(int position) {
+    private boolean verifyDex(int position) {
         return position >= 0 && position < mAdapter.getItemCount();
     }
 
     /**
-     * 设置适配器。
+     * 验证item是否存在。
      *
-     * @param adapter {@link Adapter}
+     * @param position item的下标。
+     * @return true：item已经存在ViewGroup中。
      */
-    public void setAdapter(Adapter adapter) {
-        if (mAdapter != null) {
-            throw new IllegalStateException("不能重复设置adapter。");
-        }
-        mAdapter = adapter;
-        adapter.setViewPager(this);
-    }
-
-    /**
-     * 获取主要的可见的item的下标。
-     */
-    public int getSightPosition() {
-        return sightPosition;
+    private boolean verifyExist(int position) {
+        return items.get(position) != null;
     }
     //--------------------------------------------------
 
-    private int getscrollXForPosition(int position) {
+    private int _getScrollXForPosition(int position) {
         return mAdapter.getScrollXForPosition(position, this);
     }
 
-    private View getview(int position) {
-        return mAdapter.getView(context, position, w, h);
+    private View _getView(int position) {
+        return mAdapter.getView(mContext, position, w, h);
     }
     //////////////////////////////////////////////////
 
     class ItemInfo {
         View view;
-        private int position;
+        int position;
 
         ItemInfo(View view, int position) {
             this.view = view;
@@ -349,7 +475,7 @@ public class ViewPager extends UsefulScrollViewGroup {
          * {@link ViewPager}
          * 该变量只能在{@link Adapter}的方法中使用。
          */
-        ViewPager mViewPager;
+        private ViewPager mViewPager;
 
         public final ViewPager getViewPager() {
             return mViewPager;
@@ -363,7 +489,7 @@ public class ViewPager extends UsefulScrollViewGroup {
          */
         private void setViewPager(ViewPager viewPager) {
             if (mViewPager != null) {
-                throw new IllegalStateException("不能重复设置adapter。");
+                throw new IllegalStateException("不能重复设置viewPager。");
             }
             mViewPager = viewPager;
         }
@@ -379,6 +505,28 @@ public class ViewPager extends UsefulScrollViewGroup {
          * @return item的view。
          */
         public abstract T getView(Context context, int position, int pageW, int pageH);
+
+
+        /**
+         * 当viewPager大小改变时，会收到此回调。
+         *
+         * @param viewPager viewPager。
+         * @param w         viewPager的宽。
+         * @param h         viewPager的高。
+         */
+        public void onSizeChangedSafely(ViewPager viewPager, int w, int h) {
+        }
+
+        /**
+         * 测量item。
+         *
+         * @param item      测量该item。
+         * @param position  item的下标。
+         * @param viewPager viewPager。
+         */
+        public void onMeasureItem(T item, int position, ViewPager viewPager) {
+            viewPager.measureChild(item);
+        }
 
         /**
          * 布局item。
@@ -499,6 +647,7 @@ public class ViewPager extends UsefulScrollViewGroup {
 
             }
         }
+
     }
 
     //////////////////////////////////////////////////

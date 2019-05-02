@@ -30,6 +30,8 @@ import static wclass.android.ui.view.base_view.UsefulScrollViewGroup.TouchScroll
  * @思维逻辑： -
  * @优化记录： -
  * @待解决： -
+ * //todo bug
+ * 1、模拟器中滑动卡在一个位置，之后就不滑动了，而且不走onNoTouchScroll。
  */
 @SuppressWarnings("DanglingJavadoc")
 public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
@@ -96,8 +98,6 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
      * @param duration 滑动的持续时间。
      */
     protected void smoothScrollBy(int delta, int duration) {
-        isNoTouchScroll = true;
-        invalidate();
         switch (getScrollOrien()) {
             case HORIZONTAL:
                 scroller.startScroll(getScrollX(), getScrollY(), delta, 0, duration);
@@ -109,6 +109,9 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                 throw new IllegalStateException();
         }
         onNoTouchScroll_start();
+
+        isNoTouchScroll = true;
+        invalidate();
     }
 
     //--------------------------------------------------
@@ -142,8 +145,10 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
             case MotionEvent.ACTION_DOWN:
                 touchScrollStrategy = PENDING;
                 vt.clear();
-                //按下时停止滑动。
-                scroller.forceFinished(true);
+                //标记为：不是非触摸滑动。
+                isNoTouchScroll = false;
+                //isNoTouchScroll拦截了，不需要下方代码。
+//                scroller.forceFinished(true);
                 break;
         }
         if (needScroll()) {
@@ -174,10 +179,16 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                 switch (result) {
                     case TRUE:
                         if (lastAskChildNeedEventBeforeTouchScroll(ev)) {
+                            if (DEBUG) {
+                                Log.e("TAG", getClass() + "#:CANT_TOUCH_SCROLL  ");
+                            }
                             touchScrollStrategy = CANT_TOUCH_SCROLL;
                         }
                         //item不需要事件，由自己处理滑动操作。
                         else {
+                            if (DEBUG) {
+                                Log.e("TAG", getClass() + "#:CAN_TOUCH_SCROLL  ");
+                            }
                             touchScrollStrategy = CAN_TOUCH_SCROLL;
                             onTouchScroll_start(parser, ev);
                             //step 触发滑动，返回true，由自己处理事件。
@@ -185,17 +196,20 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                         }
                         break;
                     case FALSE:
+                        if (DEBUG) {
+                            Log.e("TAG", getClass() + "#:CANT_TOUCH_SCROLL  ");
+                        }
                         touchScrollStrategy = CANT_TOUCH_SCROLL;
                         break;
                     case PENDING:
+                        if (DEBUG) {
+                            Log.e("TAG", getClass() + "#:PENDING  ");
+                        }
                         break;
                 }
                 break;
 
             case CAN_TOUCH_SCROLL:
-                if (DEBUG) {
-                    Log.e("TAG", getClass() + "#:CAN_TOUCH_SCROLL  ");
-                }
                 parser.parse(ev);
                 vt.addMovement(ev);
                 onSetTouchScrollValue(parser);
@@ -276,9 +290,11 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
                 throw new IllegalStateException();
         }
     }
-    protected int onLimitScrollValue(int scrollValue){
+
+    protected int onLimitScrollValue(int scrollValue) {
         return MathUT.limitMin(scrollValue, 0);
     }
+
     //--------------------------------------------------
     /*滑动时的回调。*/
     protected void onNoTouchScroll_start() {
@@ -294,7 +310,6 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
     }
 
     protected void onNoTouchScroll_finish() {
-
         if (DEBUG) {
             Log.e("TAG", getClass() + "#onNoTouchScroll_finish:  ");
         }
