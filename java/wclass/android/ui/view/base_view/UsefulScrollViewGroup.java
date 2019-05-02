@@ -143,7 +143,12 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
         int actionMasked = ev.getActionMasked();
         switch (actionMasked) {
             case MotionEvent.ACTION_DOWN:
-                touchScrollStrategy = PENDING;
+                if (isNoTouchScroll) {
+                    touchScrollStrategy = CAN_TOUCH_SCROLL;
+                } else {
+
+                    touchScrollStrategy = PENDING;
+                }
                 vt.clear();
                 //标记为：不是非触摸滑动。
                 isNoTouchScroll = false;

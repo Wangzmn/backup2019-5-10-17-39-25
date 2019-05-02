@@ -242,7 +242,13 @@ public class ViewPager extends UsefulScrollViewGroup {
         int position = mAdapter.getAutoScrollToPosition(sightPosition,
                 startScrollX, finishScrollX, vt);
         if (attachItemChecked(position, true)) {
-            smoothScrollTo(mAdapter.getScrollXForPosition(position, this));
+            if (DEBUG) {
+                smoothScrollTo(mAdapter.getScrollXForPosition(position,
+                        this),2000);
+            }else{
+                smoothScrollTo(mAdapter.getScrollXForPosition(position,
+                        this));
+            }
         }
     }
     //--------------------------------------------------
@@ -251,7 +257,7 @@ public class ViewPager extends UsefulScrollViewGroup {
     protected void onNoTouchScroll_finish() {
         super.onNoTouchScroll_finish();
         //缓存的item的数量不是1个时，就往滑动的方向添加1个。
-        if(mCacheCount != 1) {
+        if (mCacheCount != 1) {
             if (arrowToLast) {
                 attachItemChecked(sightPosition + 1, false);
             } else {
@@ -270,7 +276,7 @@ public class ViewPager extends UsefulScrollViewGroup {
         if (DEBUG) {
             Log.e("TAG", getClass() + "#onNoTouchScroll_finish:" +
                     " 主item的key = " + sightPosition + " 。" +
-                     ToStrUT.sparseKeyToStr(items) + " 。");
+                    ToStrUT.sparseKeyToStr(items) + " 。");
         }
     }
 
@@ -411,7 +417,7 @@ public class ViewPager extends UsefulScrollViewGroup {
     private void detachItem(int detachPosition) {
         if (DEBUG) {
             Log.e("TAG", getClass() + "#detachItem开始:" +
-                    " detachPosition = " + detachPosition + " 。" +"\n"+
+                    " detachPosition = " + detachPosition + " 。" + "\n" +
                     " 当前item数量为：" + items.size());
         }
         ItemInfo itemInfo = items.get(detachPosition);
@@ -586,49 +592,54 @@ public class ViewPager extends UsefulScrollViewGroup {
          * <p>
          * 友情提示：默认提供了一个常用的算法。
          *
-         * @param startPosition 滑动开始时的item的下标。
-         * @param startScrollX  滑动开始时的scrollX。
-         * @param currScrollX   当前的scrollX。
+         * @param sightPosition 滑动开始时的item的下标。
+         * @param startScrollX  开始滑动时的scrollX。
+         *                      友情提示：
+         *                      该值有可能为，非触摸滑动中手指触摸时，
+         *                      该值为此时的scrollX。
+         * @param finishScrollX 结束时的scrollX。
          * @param vt            速率。
          * @return 根据当前的滑动值，计算出需要自动滑动到的item的position。
          */
-        public int getAutoScrollToPosition(int startPosition, int startScrollX, int currScrollX, VelocityTracker vt) {
+        public int getAutoScrollToPosition(int sightPosition, int startScrollX, int finishScrollX, VelocityTracker vt) {
             ViewPager viewPager = getViewPager();
-            int cutScrollX = currScrollX - startScrollX;
+            int positionX = getScrollXForPosition(sightPosition, getViewPager());
+            int cutScrollX = finishScrollX - positionX;
             //往之后。
             if (cutScrollX > 0) {
-                int nextPosition = startPosition + 1;
+                int nextPosition = sightPosition + 1;
                 if (nextPosition >= getItemCount()) {
-                    return startPosition;
+                    return sightPosition;
                 }
                 int scrollX = getScrollXForPosition(nextPosition, viewPager);
                 //先通过滑动距离判断。
-                if (currScrollX > scrollX - viewPager.getWidth() / 2) {
+                if (finishScrollX > scrollX - viewPager.getWidth() / 2) {
                     return nextPosition;
                 }
                 //再通过速率判断。
                 else {
                     vt.computeCurrentVelocity(1000);
                     float xVelocity = vt.getXVelocity();
+                    //往之后滑动时，速率是负的，需要纠正一下。
                     if (-xVelocity > viewPager.getWidth()) {
                         //触发下一页。
                         return nextPosition;
                     }
                     //没触发页滑动，执行复位滑动。
                     else {
-                        return startPosition;
+                        return sightPosition;
                     }
                 }
             }
             //往之前。
             else {
-                int lastPosition = startPosition - 1;
+                int lastPosition = sightPosition - 1;
                 if (lastPosition < 0) {
-                    return startPosition;
+                    return sightPosition;
                 }
                 int scrollX = getScrollXForPosition(lastPosition, getViewPager());
                 //先通过滑动距离判断。
-                if (currScrollX < scrollX + viewPager.getWidth() / 2) {
+                if (finishScrollX < scrollX + viewPager.getWidth() / 2) {
                     return lastPosition;
                 }
                 //再通过速率判断。
@@ -641,7 +652,7 @@ public class ViewPager extends UsefulScrollViewGroup {
                     }
                     //没触发页滑动，执行复位滑动。
                     else {
-                        return startPosition;
+                        return sightPosition;
                     }
                 }
 
