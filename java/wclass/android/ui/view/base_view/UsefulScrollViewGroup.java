@@ -114,7 +114,19 @@ public abstract class UsefulScrollViewGroup extends UsefulViewGroup {
         invalidate();
     }
 
-    //--------------------------------------------------
+    //////////////////////////////////////////////////
+    public boolean isNoTouchScrolling() {
+        return isNoTouchScroll;
+    }
+
+    public boolean isTouchScrolling() {
+        return isInTouchMode() && touchScrollStrategy == CAN_TOUCH_SCROLL;
+    }
+
+    public boolean isScrolling() {
+        return isTouchScrolling() || isNoTouchScrolling();
+    }
+    //////////////////////////////////////////////////
     /*触摸滑动。*/
 
     @Override
