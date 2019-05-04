@@ -29,33 +29,6 @@ import static wclass.android.util.LayoutParamsUT.makeLayoutParams;
 @SuppressWarnings({"WeakerAccess", "unused"})
 @SuppressLint("RtlHardcoded")
 public class ViewUT {
-//    /**
-//     * {@link ViewUT#getLayoutRect(android.view.View, android.graphics.RectF)}
-//     */
-//    public static RectF getLayoutRect(View asChild) {
-//        RectF rect = new RectF();
-//        getLayoutRect(asChild, rect);
-//        return rect;
-//    }
-
-//    /**
-//     * 获取子view在父容器中的rect。
-//     *
-//     * @param asChild 子view。
-//     * @param rect    子view在容器中的rect。
-//     */
-//    public static void getLayoutRect(View asChild, RectF rect) {
-//        float x = asChild.getX();
-//        float y = asChild.getY();
-//        int width = asChild.getWidth();
-//        int height = asChild.getHeight();
-//        rect.left = x;
-//        rect.top = y;
-//        rect.right = rect.left + width;
-//        rect.bottom = rect.top + height;
-//    }
-
-    //--------------------------------------------------
 
     /**
      * 从坐标x=0、y=0，开始布局。
@@ -111,6 +84,15 @@ public class ViewUT {
     }
 
     /**
+     * 将控件大小设置为和父容器一样大。
+     *
+     * @param view 该控件。
+     */
+    public static void toMatchParent(TextView view, int fountSize) {
+        adjustSize(view, MATCH_PARENT, MATCH_PARENT, fountSize);
+    }
+
+    /**
      * 调整view的大小。
      *
      * @param view   该view
@@ -131,17 +113,14 @@ public class ViewUT {
     /**
      * 调整view的大小、字体大小。
      *
-     * @param view     该view
+     * @param tv       该view
      * @param width    宽
      * @param height   高
      * @param fontSize 字体大小
      */
-    public static void adjustSize(View view, int width, int height, int fontSize) {
-        adjustSize(view, width, height);
-        if (view instanceof TextView) {
-            TextView tv = (TextView) view;
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
-        }
+    public static void adjustSize(TextView tv, int width, int height, int fontSize) {
+        adjustSize(tv, width, height);
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, fontSize);
     }
 
     /**
@@ -201,13 +180,13 @@ public class ViewUT {
 
     public static void setSelectedEX(View view, boolean selected) {
         view.setSelected(selected);
-        if(view instanceof ViewGroup){
+        if (view instanceof ViewGroup) {
             ViewGroup root = (ViewGroup) view;
             int childCount = root.getChildCount();
-            if(childCount!=0){
+            if (childCount != 0) {
                 for (int i = 0; i < childCount; i++) {
                     View child = root.getChildAt(i);
-                    setSelectedEX(child,selected);
+                    setSelectedEX(child, selected);
                 }
             }
         }

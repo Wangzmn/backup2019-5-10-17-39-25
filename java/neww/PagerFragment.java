@@ -24,7 +24,6 @@ import android.view.ViewGroup;
  */
 public abstract class PagerFragment<T extends View> extends Fragment {
     private static final boolean DEBUG = true;
-//    ViewPager viewPager;
     //////////////////////////////////////////////////
     T mView;
 
@@ -33,7 +32,7 @@ public abstract class PagerFragment<T extends View> extends Fragment {
     public final View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
 
         if (DEBUG) {
-            Log.e("TAG", getClass() + "#onCreateView:  ");
+            Log.e("TAG", getClass() + "#onCreateView:  " + getSubName());
         }
         if (mView != null) {
             onAdjustViewState(container, mView, savedInstanceState);
@@ -50,7 +49,10 @@ public abstract class PagerFragment<T extends View> extends Fragment {
      * @param parent  fragment持有的view，的容器。
      * @return
      */
-    public T preGenerate(Context context, ViewGroup parent) {
+    public final T generateView(Context context, ViewGroup parent) {
+        if (mView != null) {
+            return mView;
+        }
         return mView = onCreateViewOptimize(context, parent, null);
     }
 
@@ -60,36 +62,38 @@ public abstract class PagerFragment<T extends View> extends Fragment {
 
     /**
      * 将
+     *
      * @param visible
      */
-    public void setVisibility(boolean visible){
+    public void setVisibility(boolean visible) {
         setMenuVisibility(visible);
         setUserVisibleHint(visible);
     }
+
     @Override
     public void setMenuVisibility(boolean menuVisible) {
         super.setMenuVisibility(menuVisible);
-            if (menuVisible) {
-                try {
-                    if (mView.getVisibility() != View.VISIBLE) {
-                        mView.setVisibility(View.VISIBLE);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    throw new IllegalStateException("请在与用户交互以后，再调用该方法。");
-                }
-                onViewVisible();
-            } else {
-                try {
-                    if (mView.getVisibility() != View.INVISIBLE) {
-                        mView.setVisibility(View.INVISIBLE);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    throw new IllegalStateException("请在与用户交互以后，再调用该方法。");
-                }
-                onViewInvisible();
-            }
+        if (menuVisible) {
+//                try {
+//                    if (mView.getVisibility() != View.VISIBLE) {
+//                        mView.setVisibility(View.VISIBLE);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    throw new IllegalStateException("请在与用户交互以后，再调用该方法。");
+//                }
+            onViewVisible();
+        } else {
+//                try {
+//                    if (mView.getVisibility() != View.INVISIBLE) {
+//                        mView.setVisibility(View.INVISIBLE);
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    throw new IllegalStateException("请在与用户交互以后，再调用该方法。");
+//                }
+            onViewInvisible();
+        }
     }
 
     @Nullable
@@ -101,12 +105,12 @@ public abstract class PagerFragment<T extends View> extends Fragment {
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
-        try {
-            mView.setEnabled(isVisibleToUser);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new IllegalStateException("请在与用户交互以后，再调用该方法。");
-        }
+//        try {
+//            mView.setEnabled(isVisibleToUser);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            throw new IllegalStateException("请在与用户交互以后，再调用该方法。");
+//        }
         if (isVisibleToUser) {
             onUserVisible();
         } else {
@@ -129,7 +133,7 @@ public abstract class PagerFragment<T extends View> extends Fragment {
     @Override
     public void onResume() {
         if (DEBUG) {
-            Log.e("TAG", getClass() + "#onResume:  ");
+            Log.e("TAG", getClass() + "#onResume:  " + getSubName());
         }
         super.onResume();
     }
@@ -137,7 +141,7 @@ public abstract class PagerFragment<T extends View> extends Fragment {
     @Override
     public void onPause() {
         if (DEBUG) {
-            Log.e("TAG", getClass() + "#onPause:  ");
+            Log.e("TAG", getClass() + "#onPause:  " + getSubName());
         }
         super.onPause();
     }
@@ -145,7 +149,7 @@ public abstract class PagerFragment<T extends View> extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         if (DEBUG) {
-            Log.e("TAG", getClass() + "#onCreate:  ");
+            Log.e("TAG", getClass() + "#onCreate:  " + getSubName());
         }
         super.onCreate(savedInstanceState);
     }
@@ -153,7 +157,7 @@ public abstract class PagerFragment<T extends View> extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         if (DEBUG) {
-            Log.e("TAG", getClass() + "#onViewCreated:  ");
+            Log.e("TAG", getClass() + "#onViewCreated:  " + getSubName());
         }
         super.onViewCreated(view, savedInstanceState);
     }
@@ -162,7 +166,7 @@ public abstract class PagerFragment<T extends View> extends Fragment {
     public void onDestroy() {
         mView = null;
         if (DEBUG) {
-            Log.e("TAG", getClass() + "#onDestroy:  ");
+            Log.e("TAG", getClass() + "#onDestroy:  " + getSubName());
         }
         super.onDestroy();
     }
@@ -170,8 +174,12 @@ public abstract class PagerFragment<T extends View> extends Fragment {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         if (DEBUG) {
-            Log.e("TAG", getClass() + "#onConfigurationChanged:  ");
+            Log.e("TAG", getClass() + "#onConfigurationChanged:  " + getSubName());
         }
         super.onConfigurationChanged(newConfig);
+    }
+
+    protected String getSubName() {
+        return "";
     }
 }
