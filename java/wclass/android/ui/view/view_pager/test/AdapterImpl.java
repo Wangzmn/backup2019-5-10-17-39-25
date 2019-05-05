@@ -1,10 +1,10 @@
-package view_pager;
+package wclass.android.ui.view.view_pager.test;
 
 import android.content.Context;
 import android.util.Log;
 import android.widget.TextView;
 
-import view_pager.ViewPager;
+import wclass.android.ui.view.view_pager.ViewPager;
 import wclass.android.util.DebugUT;
 import wclass.android.util.ViewUT;
 
@@ -21,7 +21,7 @@ public class AdapterImpl extends ViewPager.Adapter<TextView> {
     }
 
     @Override
-    public TextView getView(Context context, int position, int pageW, int pageH) {
+    public TextView createView(Context context, int position, int pageW, int pageH) {
         TextView tv = new TextView(context);
         tv.setText("我是第"+position+"个item。");
         ViewUT.adjustSize(tv,pageW,pageH,pageW/9);

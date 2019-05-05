@@ -1,4 +1,4 @@
-package neww;
+package wclass.android.ui.view.view_pager.test;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import wclass.android.ui.view.view_pager.PagerFragment;
 import wclass.android.util.DebugUT;
 import wclass.android.util.ViewUT;
 
@@ -26,9 +27,9 @@ public class PagerFragmentImpl extends PagerFragment<TextView> {
     }
 
     @Override
-    protected TextView onCreateViewOptimize(Context context, ViewGroup container, Bundle savedInstanceState) {
-        int pageW = container.getWidth();
-        int pageH = container.getHeight();
+    protected TextView onCreateViewOptimize(Context context, ViewGroup parent, Bundle savedInstanceState) {
+        int pageW = parent.getWidth();
+        int pageH = parent.getHeight();
         TextView tv = new TextView(context);
         tv.setText("我是第"+number+"个item。");
 //        ViewUT.toMatchParent(tv,pageW/9);
@@ -47,7 +48,7 @@ public class PagerFragmentImpl extends PagerFragment<TextView> {
     }
 
     @Override
-    protected void onAdjustViewState(ViewGroup container, TextView view, Bundle savedInstanceState) {
+    protected void onAdjustViewState(ViewGroup parent, TextView view, Bundle savedInstanceState) {
 
     }
 }

@@ -1,9 +1,12 @@
-package neww;
+package wclass.android.ui.view.view_pager.test;
 
 import android.app.FragmentManager;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import wclass.android.ui.view.view_pager.FragmentAdapter;
+import wclass.android.ui.view.view_pager.PagerFragment;
 
 /**
  * @作者 做就行了！
