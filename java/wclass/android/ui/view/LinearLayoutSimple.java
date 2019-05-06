@@ -125,7 +125,7 @@ public abstract class LinearLayoutSimple extends LinearLayout {
         if (DEBUG) {
             for (int i = 0; i < getChildCount(); i++) {
                 View c = getChildAt(i);
-                LogUT.logXYWH(c, getClass() + "#onLayout:" + " child" + i);
+                LogUT.log_xywh(c, getClass() + "#onLayout:" + " child" + i);
             }
         }
     }

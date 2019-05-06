@@ -3,6 +3,8 @@ package wclass.android.z_debug;
 import android.util.Log;
 import android.view.View;
 
+import ex.StringUT;
+
 /**
  * @作者 做就行了！
  * @时间 2019-04-19下午 11:49
@@ -17,12 +19,7 @@ import android.view.View;
  * @待解决： -
  */
 public class LogUT {
-    public static void logXYWH(View view, String prefix){
-        Log.e("TAG", prefix+"[" +
-                " x = " + view.getX() +
-                ", y = " + view.getY() +
-                ", width = " + view.getWidth() +
-                ", height = " + view.getHeight() +
-                " ]");
+    public static void log_xywh(View view, String prefix) {
+        Log.e("TAG", prefix + StringUT.from_xywh(view));
     }
 }

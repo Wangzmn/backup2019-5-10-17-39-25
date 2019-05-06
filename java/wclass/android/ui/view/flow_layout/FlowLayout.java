@@ -450,7 +450,7 @@ public class FlowLayout extends UsefulViewGroup {
             int cw = child.getMeasuredWidth();
             int ch = child.getMeasuredHeight();
 
-            int cLayoutWidth = getLayoutWidth(child, p);
+            int cLayoutWidth = getLayoutWidth(child);
             /**
              * 已使用的行宽+待布局的child的宽，大于可使用的行宽。
              * 此时应该换行。

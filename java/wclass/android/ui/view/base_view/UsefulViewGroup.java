@@ -20,7 +20,7 @@ import android.view.ViewGroup;
  * @待解决： -
  */
 @SuppressWarnings("DanglingJavadoc")
-public abstract class UsefulViewGroup extends ViewGroup {
+public class UsefulViewGroup extends ViewGroup {
     /*ViewGroup子类通用代码。
     子view请求事件。2019年4月29日18:00:31*/
     /**
@@ -42,6 +42,11 @@ public abstract class UsefulViewGroup extends ViewGroup {
     public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
         childRequestEvent |= disallowIntercept;
         super.requestDisallowInterceptTouchEvent(disallowIntercept);
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+
     }
 
     @Override
@@ -68,7 +73,9 @@ public abstract class UsefulViewGroup extends ViewGroup {
 
         return super.dispatchTouchEvent(ev);
     }
+
     //////////////////////////////////////////////////
+    boolean init = false;
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -76,7 +83,23 @@ public abstract class UsefulViewGroup extends ViewGroup {
         if (w == 0 || h == 0) {
             return;
         }
+        if (!init) {
+            init = true;
+            onInit(w, h);
+        }
         onSizeChangedSafely(w, h);
+    }
+
+    /**
+     * 当容器有大小时，该方法会被调用。
+     * <p>
+     * 警告：永远只会被调用一次！！！
+     *
+     * @param w 容器宽。
+     * @param h 容器高。
+     */
+    protected void onInit(int w, int h) {
+
     }
 
     protected void onSizeChangedSafely(int w, int h) {
@@ -129,11 +152,11 @@ public abstract class UsefulViewGroup extends ViewGroup {
     /**
      * 获取子view布局时的宽。
      *
-     * @param child       子view。
-     * @param childParams 子view的params。
+     * @param child 子view。
      * @return 获取子view布局时的宽。
      */
-    protected int getLayoutWidth(View child, LayoutParams childParams) {
+    protected int getLayoutWidth(View child) {
+        LayoutParams childParams = child.getLayoutParams();
         if (childParams instanceof MarginLayoutParams) {
             MarginLayoutParams childParams1 = (MarginLayoutParams) childParams;
             return child.getMeasuredWidth() + childParams1.leftMargin + childParams1.rightMargin;
@@ -145,11 +168,11 @@ public abstract class UsefulViewGroup extends ViewGroup {
     /**
      * 获取子view布局时的高。
      *
-     * @param child       子view。
-     * @param childParams 子view的params。
+     * @param child 子view。
      * @return 获取子view布局时的宽。
      */
-    protected int getLayoutHeight(View child, LayoutParams childParams) {
+    protected int getLayoutHeight(View child) {
+        LayoutParams childParams = child.getLayoutParams();
         if (childParams instanceof MarginLayoutParams) {
             MarginLayoutParams childParams1 = (MarginLayoutParams) childParams;
             return child.getMeasuredHeight() + childParams1.topMargin + childParams1.bottomMargin;
