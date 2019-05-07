@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import wclass.android.ui.view.base_view.UsefulViewGroup;
+import wclass.android.util.ViewUT;
 import wclass.android.z_debug.LogUT;
 import wclass.common.WH;
 
@@ -62,19 +63,20 @@ public class TitleLayout extends UsefulViewGroup {
     @Override
     protected void onInit(int w, int h) {
         super.onInit(w, h);
+        adapter.onCreateViews(context);
         int leftMenuCount = adapter.getLeftMenuCount();
         for (int i = 0; i < leftMenuCount; i++) {
-            View leftMenu = adapter.onCreateLeftMenu(context, i, w, h);
+            View leftMenu = adapter.onGetLeftMenu(context, i);
             lefts.add(leftMenu);
             addView(leftMenu);
         }
         int rightMenuCount = adapter.getRightMenuCount();
         for (int i = 0; i < rightMenuCount; i++) {
-            View rightMenu = adapter.onCreateRightMenu(context, i, w, h);
+            View rightMenu = adapter.onGetRightMenu(context, i);
             rights.add(rightMenu);
             addView(rightMenu);
         }
-        View midMenu = adapter.onCreateMidMenu(context, w, h);
+        View midMenu = adapter.onGetMidMenu(context);
         if (midMenu != null) {
             mid = midMenu;
             addView(mid);
@@ -87,6 +89,18 @@ public class TitleLayout extends UsefulViewGroup {
     protected void onSizeChangedSafely(int w, int h) {
         super.onSizeChangedSafely(w, h);
         adapter.onSizeChangeSafely(this, w, h);
+        boolean same = adapter.leftsRightsSameSize();
+        if (same) {
+            WH wh = adapter.getSameSize();
+            for (int i = 0; i < lefts.size(); i++) {
+                View child = lefts.get(i);
+                ViewUT.adjustSize(child, wh.w, wh.h);
+            }
+            for (int i = 0; i < rights.size(); i++) {
+                View child = rights.get(i);
+                ViewUT.adjustSize(child, wh.w, wh.h);
+            }
+        }
         measureChildrenWithMarginsSelfish();
         Vertical verti = adapter.getVerticalType();
         layoutLeftssss(verti, w, h);
@@ -98,7 +112,7 @@ public class TitleLayout extends UsefulViewGroup {
      * 布局左边的控件。
      */
     private void layoutLeftssss(Vertical verti, int w, int h) {
-        int layoutLeft = getPaddingLeft();
+        int layoutLeft = getStartLayoutLeft();
         int layoutTop;
         switch (verti) {
             case TOP:
@@ -107,7 +121,7 @@ public class TitleLayout extends UsefulViewGroup {
                     View child = lefts.get(i);
                     int childLayoutWidth = getLayoutWidth(child);
                     LayoutUT.layout(child, layoutLeft, layoutTop);
-                    layoutLeft += childLayoutWidth;
+                    layoutLeft = getNextLayoutLeft(layoutLeft, childLayoutWidth);
                 }
                 break;
             case MID:
@@ -117,7 +131,7 @@ public class TitleLayout extends UsefulViewGroup {
                     int childLayoutHeight = getLayoutHeight(child);
                     layoutTop = (h - childLayoutHeight) / 2;
                     LayoutUT.layout(child, layoutLeft, layoutTop);
-                    layoutLeft += childLayoutWidth;
+                    layoutLeft = getNextLayoutLeft(layoutLeft, childLayoutWidth);
                 }
                 break;
             case BOTTOM:
@@ -128,7 +142,7 @@ public class TitleLayout extends UsefulViewGroup {
                     int childLayoutHeight = getLayoutHeight(child);
                     layoutTop = layoutBottom - childLayoutHeight;
                     LayoutUT.layout(child, layoutLeft, layoutTop);
-                    layoutLeft += childLayoutWidth;
+                    layoutLeft = getNextLayoutLeft(layoutLeft, childLayoutWidth);
                 }
                 break;
             default:
@@ -151,7 +165,7 @@ public class TitleLayout extends UsefulViewGroup {
      */
     private void layoutRightssss(Vertical verti, int w, int h) {
         int layoutLeft;
-        int layoutRight = w - getPaddingRight();
+        int layoutRight = getStartLayoutRight(w);
         int layoutTop;
         switch (verti) {
             case TOP:
@@ -162,7 +176,7 @@ public class TitleLayout extends UsefulViewGroup {
                     int childLayoutHeight = getLayoutHeight(child);
                     layoutLeft = layoutRight - childLayoutWidth;
                     LayoutUT.layout(child, layoutLeft, layoutTop);
-                    layoutRight = layoutLeft;
+                    layoutRight = getNextLayoutRight(layoutLeft);
                 }
                 break;
             case MID:
@@ -173,7 +187,7 @@ public class TitleLayout extends UsefulViewGroup {
                     layoutLeft = layoutRight - childLayoutWidth;
                     layoutTop = (h - childLayoutHeight) / 2;
                     LayoutUT.layout(child, layoutLeft, layoutTop);
-                    layoutRight = layoutLeft;
+                    layoutRight = getNextLayoutRight(layoutLeft);
                 }
                 break;
             case BOTTOM:
@@ -186,7 +200,7 @@ public class TitleLayout extends UsefulViewGroup {
                     layoutTop = layoutBottom - childLayoutHeight;
 
                     LayoutUT.layout(child, layoutLeft, layoutTop);
-                    layoutRight = layoutLeft;
+                    layoutRight = getNextLayoutRight(layoutLeft);
                 }
                 break;
             default:
@@ -222,21 +236,68 @@ public class TitleLayout extends UsefulViewGroup {
         }
     }
 
+    //////////////////////////////////////////////////
+
+    /**
+     * 获取左侧items，开始布局时的layoutLeft。
+     */
+    private int getStartLayoutLeft() {
+        boolean has = adapter.isLeftAndRightHasGap();
+        int gap = 0;
+        if (has) {
+            gap = adapter.getItemGap();
+        }
+        return getPaddingLeft() + gap;
+    }
+
+    /**
+     * 获取右侧items，开始布局时的layoutRight。
+     */
+    private int getStartLayoutRight(int w) {
+        boolean has = adapter.isLeftAndRightHasGap();
+        int gap = 0;
+        if (has) {
+            gap = adapter.getItemGap();
+        }
+        return w - getPaddingRight() - gap;
+    }
+
+    /**
+     * 获取下一个item的layoutLeft。
+     *
+     * @param layoutLeft       当前item的layoutLeft。
+     * @param childLayoutWidth item的layoutWidth。
+     * @return 获取下一个item的layoutLeft。
+     */
+    private int getNextLayoutLeft(int layoutLeft, int childLayoutWidth) {
+        return layoutLeft + childLayoutWidth + adapter.getItemGap();
+    }
+
+    /**
+     * 获取下一个item的layoutRight。
+     *
+     * @param layoutLeft 当前item的layoutLeft。
+     * @return 获取下一个item的layoutLeft。
+     */
+    private int getNextLayoutRight(int layoutLeft) {
+        return layoutLeft - adapter.getItemGap();
+    }
+    //////////////////////////////////////////////////
 
     /**
      *
      */
     public static abstract class Adapter {
-
         /**
-         * titleLayout每次大小改变时，会调用该方法。
+         * 在该方法中创建所有view。
+         * {@link Adapter#onGetMidMenu(Context)}
+         * {@link Adapter#onGetLeftMenu(Context, int)}
+         * {@link Adapter#onGetRightMenu(Context, int)}
+         * 在以上方法中返回他们。
          *
-         * @param titleLayout titleLayout。
-         * @param w           他的宽。
-         * @param h           他的高。
+         * @param context 上下文。
          */
-        public abstract void onSizeChangeSafely(TitleLayout titleLayout,
-                                                int w, int h);
+        public abstract void onCreateViews(Context context);
 
         /**
          * 获取中间的控件。
@@ -244,11 +305,9 @@ public class TitleLayout extends UsefulViewGroup {
          * 友情提示：可以返回null。
          *
          * @param context 上下文。
-         * @param w       titleLayout的宽。
-         * @param h       titleLayout的高。
          * @return 中间的控件。
          */
-        public abstract View onCreateMidMenu(Context context, int w, int h);
+        public abstract View onGetMidMenu(Context context);
 
         /**
          * 获取左边的控件。
@@ -257,11 +316,10 @@ public class TitleLayout extends UsefulViewGroup {
          *
          * @param context  上下文。
          * @param position 从左到右排序的下标。
-         * @param w        titleLayout的宽。
-         * @param h        titleLayout的高。
          * @return 左边的控件。
          */
-        public abstract View onCreateLeftMenu(Context context, int position, int w, int h);
+        public abstract View onGetLeftMenu(Context context, int position);
+
         /**
          * 获取右边的控件。
          * <p>
@@ -269,11 +327,27 @@ public class TitleLayout extends UsefulViewGroup {
          *
          * @param context  上下文。
          * @param position 从右到左排序的下标。
-         * @param w        titleLayout的宽。
-         * @param h        titleLayout的高。
          * @return 右边的控件。
          */
-        public abstract View onCreateRightMenu(Context context, int position, int w, int h);
+        public abstract View onGetRightMenu(Context context, int position);
+
+        //////////////////////////////////////////////////
+
+        /**
+         * titleLayout每次大小改变时，会调用该方法。
+         * <p>
+         * 友情提示：
+         * 1、可以在该方法中调整子view的大小。
+         * 2、如果{@link #leftsRightsSameSize()}返回true，
+         * 那么左右两侧的item大小将采用{@link #getSameSize()}的大小。
+         * 也就是说，在该方法调整左右两侧的view的大小是无效的。
+         *
+         * @param titleLayout titleLayout。
+         * @param w           他的宽。
+         * @param h           他的高。
+         */
+        public abstract void onSizeChangeSafely(TitleLayout titleLayout,
+                                                int w, int h);
 
         /**
          * 获取左边控件的数量。
@@ -302,7 +376,19 @@ public class TitleLayout extends UsefulViewGroup {
         }
 
         /**
+         * 最左和最右两端是否有间隙。
+         *
+         * @return true：最左和最右也有间隙。
+         */
+        public boolean isLeftAndRightHasGap() {
+            return true;
+        }
+
+        /**
          * 位于左右两边的item是否一样大小。
+         * <p>
+         * 警告：如果返回true，请重写{@link Adapter#getSameSize()}方法。
+         *
          * @return true：他们一样大小。
          */
         public boolean leftsRightsSameSize() {

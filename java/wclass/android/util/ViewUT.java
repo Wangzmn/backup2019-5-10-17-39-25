@@ -10,6 +10,7 @@ import android.widget.TextView;
 import wclass.enums.Level3;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static wclass.android.util.LayoutParamsUT.makeLayoutParams;
 
 /**
@@ -72,7 +73,7 @@ public class ViewUT {
         }
     }
 
-    //--------------------------------------------------
+    //////////////////////////////////////////////////
 
     /**
      * 将控件大小设置为和父容器一样大。
@@ -91,6 +92,15 @@ public class ViewUT {
     public static void toMatchParent(TextView view, int fountSize) {
         adjustSize(view, MATCH_PARENT, MATCH_PARENT, fountSize);
     }
+
+    public static void toWrapContent(View view) {
+        adjustSize(view, WRAP_CONTENT, WRAP_CONTENT);
+    }
+
+    public static void toWrapContent(TextView view, int fountSize) {
+        adjustSize(view, WRAP_CONTENT, WRAP_CONTENT, fountSize);
+    }
+    //////////////////////////////////////////////////
 
     /**
      * 调整view的大小。

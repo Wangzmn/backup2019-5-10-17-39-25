@@ -29,4 +29,9 @@ public class WH {
         w = wh.w;
         h = wh.h;
     }
+
+    public void set(int w,int h){
+        this.w = w;
+        this.h = h;
+    }
 }
