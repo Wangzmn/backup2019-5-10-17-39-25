@@ -7,7 +7,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import wclass.android.util.DebugUT;
-import wclass.android.z_debug.EventUT;
+import wclass.android.util.debug.EventUT;
 
 /**
  * @作者 做就行了！

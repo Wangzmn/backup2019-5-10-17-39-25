@@ -17,6 +17,7 @@ import android.view.MotionEvent;
  */
 public class TouchEventUT {
 
+
     /**
      * 在bounds中，获取x/y相对于bounds宽/高的百分比，
      * 并把x百分比和y百分比放入pers数组中。
@@ -52,4 +53,5 @@ public class TouchEventUT {
         pers[0] = xPer;
         pers[1] = yPer;
     }
+
 }

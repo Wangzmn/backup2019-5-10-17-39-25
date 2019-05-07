@@ -8,7 +8,7 @@ import android.widget.FrameLayout;
 import android.widget.Scroller;
 
 import wclass.android.ui.EventTypeConverter;
-import wclass.android.z_debug.EventUT;
+import wclass.android.util.debug.EventUT;
 import wclass.enums.EventType;
 import wclass.ui.event_parser.MultiSingleParser;
 

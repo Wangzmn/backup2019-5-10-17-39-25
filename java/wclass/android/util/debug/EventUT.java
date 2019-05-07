@@ -1,4 +1,4 @@
-package wclass.android.z_debug;
+package wclass.android.util.debug;
 
 import android.view.MotionEvent;
 

@@ -1,4 +1,4 @@
-package neww;
+package wclass.android.util;
 
 import android.view.View;
 import android.view.ViewGroup;

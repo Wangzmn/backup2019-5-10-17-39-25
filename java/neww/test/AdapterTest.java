@@ -1,9 +1,11 @@
-package neww;
+package neww.test;
 
 import android.content.Context;
 import android.view.View;
 import android.widget.TextView;
 
+import neww.TitleLayout;
+import wclass.enums.Vertical3;
 import wclass.android.util.DebugUT;
 import wclass.android.util.ViewUT;
 import wclass.common.WH;
@@ -114,8 +116,8 @@ public class AdapterTest extends TitleLayout.Adapter {
     }
 
     @Override
-    public Vertical getVerticalType() {
-//        return Vertical.TOP;
-        return Vertical.BOTTOM;
+    public Vertical3 getVerticalType() {
+//        return Vertical3.TOP;
+        return Vertical3.BOTTOM;
     }
 }

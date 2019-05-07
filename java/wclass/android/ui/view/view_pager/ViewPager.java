@@ -8,7 +8,7 @@ import android.view.VelocityTracker;
 import android.view.View;
 
 import wclass.android.ui.view.base_view.UsefulScrollViewGroup;
-import wclass.android.util.debug.ToStrUT;
+import wclass.android.util.debug.StringUT;
 import wclass.enums.Orien2;
 import wclass.ui.event_parser.MultiSingleParser;
 import wclass.util.MathUT;
@@ -298,7 +298,7 @@ public class ViewPager extends UsefulScrollViewGroup {
         if (DEBUG) {
             Log.e("TAG", getClass() + "#onNoTouchScroll_finish:" +
                     " 主item的key = " + mSelectedPosition + " 。" +
-                    ToStrUT.sparseKeyToStr(items) + " 。");
+                    StringUT.toStr(items) + " 。");
         }
     }
 
@@ -473,7 +473,7 @@ public class ViewPager extends UsefulScrollViewGroup {
         if (DETACH_DEBUG) {
             Log.e("TAG", getClass() + "#detachItem结束:" +
                     " 主item的key = " + mSelectedPosition + " 。" +
-                    ToStrUT.sparseKeyToStr(items) + " 。");
+                    StringUT.toStr(items) + " 。");
         }
     }
     //--------------------------------------------------

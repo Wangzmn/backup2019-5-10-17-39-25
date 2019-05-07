@@ -32,50 +32,6 @@ import static wclass.android.util.LayoutParamsUT.makeLayoutParams;
 public class ViewUT {
 
     /**
-     * 从坐标x=0、y=0，开始布局。
-     *
-     * @param view 待布局的view。
-     */
-    public static void layout00(View view) {
-        view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
-    }
-
-    /**
-     * 包含外边距数值的设置X Y坐标。
-     *
-     * @param view 该view。
-     * @param x    X坐标。
-     * @param y    Y坐标。
-     * @param p    布局参数。
-     */
-    public static void setXYWithMargin(View view, float x, float y,
-                                       ViewGroup.MarginLayoutParams p) {
-        view.setX(x + p.leftMargin);
-        view.setY(y + p.topMargin);
-    }
-
-    /**
-     * 从坐标x=0、y=0，开始布局。
-     *
-     * @param view 该view。
-     * @param x    X坐标。
-     * @param y    Y坐标。
-     * @param p    布局参数。
-     */
-    public static void layoutByXY(View view, float x, float y,
-                                  ViewGroup.LayoutParams p) {
-        layout00(view);
-        if (p instanceof ViewGroup.MarginLayoutParams) {
-            setXYWithMargin(view, x, y, (ViewGroup.MarginLayoutParams) p);
-        } else {
-            view.setX(x);
-            view.setY(y);
-        }
-    }
-
-    //////////////////////////////////////////////////
-
-    /**
      * 将控件大小设置为和父容器一样大。
      *
      * @param view 该控件。

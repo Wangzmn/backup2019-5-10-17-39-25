@@ -1,4 +1,4 @@
-package wclass.android.z_debug.value_select_buttons;
+package wclass.android.ui.view.z_for_test.value_select_buttons;
 
 import android.content.Context;
 import android.view.View;

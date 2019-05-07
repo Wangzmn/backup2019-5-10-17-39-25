@@ -7,9 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import wclass.android.ui.view.base_view.UsefulViewGroup;
+import wclass.android.util.LayoutUT;
 import wclass.android.util.ViewUT;
-import wclass.android.z_debug.LogUT;
+import wclass.android.util.debug.LogUT;
 import wclass.common.WH;
+import wclass.enums.Vertical3;
 
 /**
  * @作者 做就行了！
@@ -102,7 +104,7 @@ public class TitleLayout extends UsefulViewGroup {
             }
         }
         measureChildrenWithMarginsSelfish();
-        Vertical verti = adapter.getVerticalType();
+        Vertical3 verti = adapter.getVerticalType();
         layoutLeftssss(verti, w, h);
         layoutRightssss(verti, w, h);
         layoutMidMenu(verti, w, h);
@@ -111,7 +113,7 @@ public class TitleLayout extends UsefulViewGroup {
     /**
      * 布局左边的控件。
      */
-    private void layoutLeftssss(Vertical verti, int w, int h) {
+    private void layoutLeftssss(Vertical3 verti, int w, int h) {
         int layoutLeft = getStartLayoutLeft();
         int layoutTop;
         switch (verti) {
@@ -153,7 +155,7 @@ public class TitleLayout extends UsefulViewGroup {
             for (int i = 0; i < lefts.size(); i++) {
                 String str = getClass() + "#layoutLeftssss:" +
                         " child" + i + ":";
-                LogUT.log_xywh(lefts.get(i), str);
+                LogUT.XYWH(lefts.get(i), str);
             }
         }
 
@@ -163,7 +165,7 @@ public class TitleLayout extends UsefulViewGroup {
     /**
      * 布局右边的控件。
      */
-    private void layoutRightssss(Vertical verti, int w, int h) {
+    private void layoutRightssss(Vertical3 verti, int w, int h) {
         int layoutLeft;
         int layoutRight = getStartLayoutRight(w);
         int layoutTop;
@@ -211,7 +213,7 @@ public class TitleLayout extends UsefulViewGroup {
     /**
      * 布局中间的控件。
      */
-    private void layoutMidMenu(Vertical verti, int w, int h) {
+    private void layoutMidMenu(Vertical3 verti, int w, int h) {
         if (mid != null) {
             int layoutWidth = getLayoutWidth(mid);
             int layoutLeft = (w - layoutWidth) / 2;
@@ -362,8 +364,8 @@ public class TitleLayout extends UsefulViewGroup {
         /**
          * 获取垂直方向的布局锚点。
          */
-        public Vertical getVerticalType() {
-            return Vertical.MID;
+        public Vertical3 getVerticalType() {
+            return Vertical3.MID;
         }
 
         //////////////////////////////////////////////////

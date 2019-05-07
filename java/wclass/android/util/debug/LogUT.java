@@ -1,9 +1,9 @@
-package wclass.android.z_debug;
+package wclass.android.util.debug;
 
 import android.util.Log;
 import android.view.View;
 
-import ex.StringUT;
+import wclass.android.util.debug.StringUT;
 
 /**
  * @作者 做就行了！
@@ -19,7 +19,7 @@ import ex.StringUT;
  * @待解决： -
  */
 public class LogUT {
-    public static void log_xywh(View view, String prefix) {
-        Log.e("TAG", prefix + StringUT.from_xywh(view));
+    public static void XYWH(View view, String prefix) {
+        Log.e("TAG", prefix + StringUT.toStr(view));
     }
 }

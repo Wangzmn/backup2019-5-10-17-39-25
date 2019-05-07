@@ -10,7 +10,7 @@ import android.widget.LinearLayout;
 import java.util.ArrayList;
 import java.util.List;
 
-import wclass.android.z_debug.LogUT;
+import wclass.android.util.debug.LogUT;
 import wclass.android.util.LayoutParamsUT;
 import wclass.android.util.ViewUT;
 
@@ -125,7 +125,7 @@ public abstract class LinearLayoutSimple extends LinearLayout {
         if (DEBUG) {
             for (int i = 0; i < getChildCount(); i++) {
                 View c = getChildAt(i);
-                LogUT.log_xywh(c, getClass() + "#onLayout:" + " child" + i);
+                LogUT.XYWH(c, getClass() + "#onLayout:" + " child" + i);
             }
         }
     }
