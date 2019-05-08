@@ -75,7 +75,7 @@ public class UsefulViewGroup extends ViewGroup {
     }
 
     //////////////////////////////////////////////////
-    boolean init = false;
+//    boolean init = false;
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -83,24 +83,24 @@ public class UsefulViewGroup extends ViewGroup {
         if (w == 0 || h == 0) {
             return;
         }
-        if (!init) {
-            init = true;
-            onInit(w, h);
-        }
+//        if (!init) {
+//            init = true;
+//            onInit(w, h);
+//        }
         onSizeChangedSafely(w, h);
     }
 
-    /**
-     * 当容器有大小时，该方法会被调用。
-     * <p>
-     * 警告：永远只会被调用一次！！！
-     *
-     * @param w 容器宽。
-     * @param h 容器高。
-     */
-    protected void onInit(int w, int h) {
-
-    }
+//    /**
+//     * 当容器有大小时，该方法会被调用。
+//     * <p>
+//     * 警告：永远只会被调用一次！！！
+//     *
+//     * @param w 容器宽。
+//     * @param h 容器高。
+//     */
+//    protected void onInit(int w, int h) {
+//
+//    }
 
     protected void onSizeChangedSafely(int w, int h) {
 
@@ -156,7 +156,7 @@ public class UsefulViewGroup extends ViewGroup {
      * @return 获取子view布局时的宽。
      */
     protected int getLayoutWidth(View child) {
-        LayoutParams childParams = child.getLayoutParams();
+        ViewGroup.LayoutParams childParams = child.getLayoutParams();
         if (childParams instanceof MarginLayoutParams) {
             MarginLayoutParams childParams1 = (MarginLayoutParams) childParams;
             return child.getMeasuredWidth() + childParams1.leftMargin + childParams1.rightMargin;
@@ -172,7 +172,7 @@ public class UsefulViewGroup extends ViewGroup {
      * @return 获取子view布局时的宽。
      */
     protected int getLayoutHeight(View child) {
-        LayoutParams childParams = child.getLayoutParams();
+        ViewGroup.LayoutParams childParams = child.getLayoutParams();
         if (childParams instanceof MarginLayoutParams) {
             MarginLayoutParams childParams1 = (MarginLayoutParams) childParams;
             return child.getMeasuredHeight() + childParams1.topMargin + childParams1.bottomMargin;

@@ -28,20 +28,13 @@ public class LoginFrame extends FrameLayout{
         asRoot = new LinearLayout(context);
         ViewUT.toMatchParent(asRoot);
         //--------------------------------------------------
-
-        //--------------------------------------------------
-        //--------------------------------------------------
-        //--------------------------------------------------
-
-
-
     }
 
     public static abstract class Adapter{
         /*分别在他们之前调用：添加标题、用户名、密码的root控件*/
-        public abstract void preAddTitle(LinearLayout titleRoot,int w,int h);
-        public abstract void preAddAccount(LinearLayout accountRoot,int w,int h);
-        public abstract void preAddPassword(LinearLayout passwordRoot,int w,int h);
+//        public abstract void preAddTitle(LinearLayout titleRoot,int w,int h);
+//        public abstract void preAddAccount(LinearLayout accountRoot,int w,int h);
+//        public abstract void preAddPassword(LinearLayout passwordRoot,int w,int h);
         //--------------------------------------------------
         /*正式添加标题、用户名、密码的root控件*/
         public abstract void onAddTitle(LinearLayout titleRoot,int w,int h);

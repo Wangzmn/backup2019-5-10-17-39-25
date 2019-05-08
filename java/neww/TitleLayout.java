@@ -62,9 +62,7 @@ public class TitleLayout extends UsefulViewGroup {
     Adapter adapter;
     //////////////////////////////////////////////////
 
-    @Override
-    protected void onInit(int w, int h) {
-        super.onInit(w, h);
+    private void init(int w, int h) {
         adapter.onCreateViews(context);
         int leftMenuCount = adapter.getLeftMenuCount();
         for (int i = 0; i < leftMenuCount; i++) {
@@ -87,9 +85,14 @@ public class TitleLayout extends UsefulViewGroup {
     }
 
     //////////////////////////////////////////////////
+    boolean init;
     @Override
     protected void onSizeChangedSafely(int w, int h) {
         super.onSizeChangedSafely(w, h);
+        if(!init){
+            init = true;
+            init(w,h);
+        }
         adapter.onSizeChangeSafely(this, w, h);
         boolean same = adapter.leftsRightsSameSize();
         if (same) {
