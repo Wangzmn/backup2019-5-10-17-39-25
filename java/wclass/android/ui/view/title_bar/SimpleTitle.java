@@ -1,8 +1,7 @@
-package neww;
+package wclass.android.ui.view.title_bar;
 
 import android.content.Context;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
@@ -24,13 +23,14 @@ import wclass.common.WH;
  * @优化记录： -
  * @待解决： -
  */
-public  class SimpleAdapter extends TitleLayout.Adapter {
+public abstract class SimpleTitle<T extends View> extends TitleBar {
     private static final boolean DEBUG = true;
+    //////////////////////////////////////////////////
     private final Context context;
     private final int leftCount;
     private final int rightCount;
 
-    private FrameLayout mid;
+    private T title;
     private List<ImageView> lefts = new ArrayList<>();
     private List<ImageView> rights = new ArrayList<>();
 
@@ -39,10 +39,12 @@ public  class SimpleAdapter extends TitleLayout.Adapter {
      */
     private WH wh = new WH();
 
-    public SimpleAdapter(Context context, int leftCount, int rightCount) {
+    public SimpleTitle(Context context, int leftCount, int rightCount) {
+        super(context);
         this.context = context;
         this.leftCount = leftCount;
         this.rightCount = rightCount;
+        init();
     }
 
     /**
@@ -50,7 +52,7 @@ public  class SimpleAdapter extends TitleLayout.Adapter {
      * @param position 该view的下标。
      * @return 指定的左边的view。
      */
-    public ImageView getLeftView(int position) {
+    protected ImageView getLeftView(int position) {
         return lefts.get(position);
     }
 
@@ -59,21 +61,28 @@ public  class SimpleAdapter extends TitleLayout.Adapter {
      * @param position 该view的下标。
      * @return 指定的右边的view。
      */
-    public ImageView getRightView(int position) {
+    protected ImageView getRightView(int position) {
         return rights.get(position);
+    }
+
+    /**
+     * 获取标题控件。
+     */
+    protected T getTitle(){
+        return title;
     }
 
     /**
      * 获取左边view的数量。
      */
-    public int getLeftCount() {
+    protected int getLeftCount() {
         return leftCount;
     }
 
     /**
      * 获取右边view的数量。
      */
-    public int getRightCount() {
+    protected int getRightCount() {
         return rightCount;
     }
 
@@ -85,7 +94,7 @@ public  class SimpleAdapter extends TitleLayout.Adapter {
      * @param context 上下文。
      */
     @Override
-    public void onCreateViews(Context context) {
+    protected void onCreateViews(Context context) {
         for (int i = 0; i < leftCount; i++) {
             ImageView iv = new ImageView(context);
             lefts.add(iv);
@@ -102,75 +111,86 @@ public  class SimpleAdapter extends TitleLayout.Adapter {
             }
         }
 
-        mid = new FrameLayout(context);
-        ViewUT.toWrapContent(mid);
+        title = onCreateTitle(context);
 
         if (DEBUG) {
-            DebugUT.randomBG(mid);
+            DebugUT.randomBG(title);
         }
     }
 
+    /**
+     * 创建标题控件，并返回。
+     *
+     * 友情提示：可以返回null。
+     */
+    protected abstract T onCreateTitle(Context context);
+
     @Override
-    public void onSizeChangeSafely(TitleLayout titleLayout, int w, int h) {
-        wh.set(getSize(titleLayout, w, h));
+    protected void onSizeChangeSafely(TitleBar titleBar, int w, int h) {
+
+    }
+
+    @Override
+    protected void onAdjustViews(TitleBar titleBar, int w, int h) {
+        wh.set(getSize(titleBar, w, h));
         if (DEBUG) {
-            ViewUT.adjustSize(mid, wh.h*2, wh.h);
+            ViewUT.adjustSize(title, wh.h*2, wh.h);
         }
     }
 
     /**
      * 子类可以重写左右方view的大小。
      *
-     * @param titleLayout titleLayout。
+     * @param titleBar titleLayout。
      * @param w           他的宽。
      * @param h           他的高。
      * @return 左右方view的大小
      */
-    protected WH getSize(TitleLayout titleLayout, int w, int h) {
-        int pt = titleLayout.getPaddingTop();
-        int pb = titleLayout.getPaddingBottom();
+    protected WH getSize(TitleBar titleBar, int w, int h) {
+        int pt = titleBar.getPaddingTop();
+        int pb = titleBar.getPaddingBottom();
         int size = h - pt - pb;
         return new WH(size, size);
     }
 
     //////////////////////////////////////////////////
     @Override
-    public View onGetMidMenu(Context context) {
-        return mid;
+    protected View onGetMidMenu(Context context) {
+        return title;
     }
 
     @Override
-    public View onGetLeftMenu(Context context, int position) {
+    protected View onGetLeftMenu(Context context, int position) {
         return lefts.get(position);
     }
 
     @Override
-    public View onGetRightMenu(Context context, int position) {
+    protected View onGetRightMenu(Context context, int position) {
         return rights.get(position);
     }
 
     @Override
-    public boolean leftsRightsSameSize() {
+    protected boolean leftsRightsSameSize() {
         return true;
     }
 
     @Override
-    public int getItemGap() {
-        return wh.h / 8;
+    protected int getItemGap() {
+        return wh.h / 4;
     }
 
     @Override
-    public WH getSameSize() {
+    protected WH getSameSize() {
         return wh;
     }
 
     @Override
-    public int getLeftMenuCount() {
-        return lefts.size();
+    protected int getLeftMenuCount() {
+        return leftCount;
     }
 
     @Override
-    public int getRightMenuCount() {
-        return rights.size();
+    protected int getRightMenuCount() {
+        return rightCount;
     }
 }

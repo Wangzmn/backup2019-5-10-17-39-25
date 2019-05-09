@@ -80,7 +80,7 @@ public class UsefulViewGroup extends ViewGroup {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        if (w == 0 || h == 0) {
+        if (w <= 0 || h <= 0) {
             return;
         }
 //        if (!init) {

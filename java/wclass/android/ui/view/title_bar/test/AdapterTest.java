@@ -1,10 +1,10 @@
-package neww.test;
+package wclass.android.ui.view.title_bar.test;
 
 import android.content.Context;
 import android.view.View;
 import android.widget.TextView;
 
-import neww.TitleLayout;
+import wclass.android.ui.view.title_bar.TitleBar;
 import wclass.enums.Vertical3;
 import wclass.android.util.DebugUT;
 import wclass.android.util.ViewUT;
@@ -15,7 +15,7 @@ import wclass.common.WH;
  * @时间 2019/5/6 0006
  * @使用说明：
  */
-public class AdapterTest extends TitleLayout.Adapter {
+public class AdapterTest extends TitleBar {
 
     private TextView midMenu;
 
@@ -25,6 +25,10 @@ public class AdapterTest extends TitleLayout.Adapter {
 
     TextView r0;
     TextView r1;
+
+    public AdapterTest(Context context) {
+        super(context);
+    }
 
     @Override
     public boolean leftsRightsSameSize() {
@@ -42,9 +46,9 @@ public class AdapterTest extends TitleLayout.Adapter {
     }
 
     @Override
-    public void onSizeChangeSafely(TitleLayout titleLayout, int w, int h) {
+    public void onSizeChangeSafely(TitleBar titleBar, int w, int h) {
         int pad = 10;
-        titleLayout.setPadding(pad, pad, pad, pad);
+        titleBar.setPadding(pad, pad, pad, pad);
         sssss(30, h, midMenu, "我是mid");
 
         sssss(60, h, l0, "我是left" + 0);
@@ -53,6 +57,11 @@ public class AdapterTest extends TitleLayout.Adapter {
 
         sssss(30, h, r0, "我是right" + 0);
         sssss(60, h, r1, "我是right" + 1);
+    }
+
+    @Override
+    protected void onAdjustViews(TitleBar titleBar, int w, int h) {
+
     }
 
     private void sssss(int subW, int h, TextView tv, String s) {
