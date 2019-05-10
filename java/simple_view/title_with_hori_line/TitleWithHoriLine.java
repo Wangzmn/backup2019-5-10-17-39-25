@@ -1,4 +1,4 @@
-package simple_view;
+package simple_view.title_with_hori_line;
 
 import android.content.Context;
 import android.view.Gravity;

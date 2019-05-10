@@ -1,4 +1,4 @@
-package simple_view;
+package simple_view.text_view;
 
 import android.content.Context;
 import android.widget.TextView;
@@ -9,6 +9,7 @@ import wclass.android.util.ViewUT;
  * @作者 做就行了！
  * @时间 2019-05-09下午 10:59
  * @该类描述： -
+ * 1、简单的只显示文字的textView。
  * @名词解释： -
  * @该类用途： -
  * @注意事项： -
@@ -17,17 +18,13 @@ import wclass.android.util.ViewUT;
  * @优化记录： -
  * @待解决： -
  */
-public class TextViewSK extends TextView {
-    public TextViewSK(Context context, String s, int pixFontSize, int fontColor) {
+public class PureTextView extends TextView {
+    public PureTextView(Context context, String content,
+                        int pixFontSize, int fontColor) {
         super(context);
         setIncludeFontPadding(false);
-        setText(s);
-        ViewUT.adjustFontSize(this,pixFontSize);
         setTextColor(fontColor);
-    }
-    public TextViewSK(Context context, String s) {
-        super(context);
-        setIncludeFontPadding(false);
-        setText(s);
+        setText(content);
+        ViewUT.toWrapContent(this,pixFontSize);
     }
 }
